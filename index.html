@@ -1320,55 +1320,56 @@ function addFromAppDetailModal() {
     render();
 }
 
-          function renderMapModal() {
-            return `
-                        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-auto p-4">
-                        <div class="bg-white rounded-lg shadow-2xl my-8" style="width: 95%; max-width: 1000px; height: 600px; display: flex; flex-direction: column; overflow: hidden;">
-                        
-                        <!-- 헤더 -->
-                        <div class="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
-                            <h3 class="text-2xl font-bold">🗺️ 시설 위치 지도</h3>
-                            <button id="mapCloseBtn" class="text-gray-600 hover:text-gray-900 text-3xl font-bold">✕</button>
-                        </div>
+         function renderMapModal() {
+    return `
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-auto p-4">
+                <div class="bg-white rounded-lg shadow-2xl my-8" style="width: 95%; max-width: 1000px; height: 700px; display: flex; flex-direction: column; overflow: hidden;">
+                
+                <!-- 헤더 -->
+                <div class="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
+                    <h3 class="text-2xl font-bold">🗺️ 시설 위치 지도</h3>
+                    <button id="mapCloseBtn" class="text-gray-600 hover:text-gray-900 text-3xl font-bold">✕</button>
+                </div>
 
-                        <!-- 지도 컨테이너 -->
-                        <div id="mapContainer" style="width: 100%; height: 400px; background: #f0f0f0; border: 1px solid #ccc;"></div>
-                        <!-- 로딩 프로그래스 바 -->
-                        ${state.isLoadingMap ? `
-                             <div style="padding: 1.5rem; background: #eff6ff; border-top: 1px solid #bfdbfe;">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-semibold text-blue-700">지도 로딩 중...</span>
-                                    <span class="text-sm font-bold text-blue-600">${state.mapLoadingProgress}%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-3">
-                                    <div class="bg-blue-600 h-3 rounded-full transition-all" style="width: ${state.mapLoadingProgress}%;"></div>
-                                </div>
-                            </div>
-                        ` : ''}
-                        <!-- 주소 정보 -->
-                        <div class="p-6 bg-gray-50 border-t max-h-40 overflow-y-auto">
-                            <h4 class="font-bold mb-4">📍 선택된 시설 주소</h4>
-                            <div class="space-y-3">
-                                ${state.mapData.map((item, idx) => `
-                                    <div class="bg-white p-4 rounded border-l-4 border-blue-500">
-                                        <p class="font-semibold">${item['시설명']}</p>
-                                        <p class="text-sm text-gray-600">시설번호: ${item['시설번호']}</p>
-                                        <p class="text-sm text-gray-700">📮 ${item['새주소']}</p>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-
-                        <!-- 버튼 -->
-                        <div class="flex gap-3 justify-end p-6 border-t bg-white">
-                            <button id="mapCancelBtn" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 font-semibold">
-                                닫기
-                            </button>
-                        </div>
+                <!-- 지도 컨테이너 -->
+                <div id="mapContainer" style="width: 100%; height: 400px; background: #f0f0f0; border: 1px solid #ccc;"></div>
+                <!-- 로딩 프로그래스 바 -->
+                <div id="mapLoadingBar" style="padding: 1.5rem; background: #eff6ff; border-top: 1px solid #bfdbfe; ${state.isLoadingMap ? '' : 'display: none;'}">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-semibold text-blue-700">지도 로딩 중...</span>
+                        <span id="mapProgressText" class="text-sm font-bold text-blue-600">${state.mapLoadingProgress}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div id="mapProgressBar" class="bg-blue-600 h-3 rounded-full transition-all" style="width: ${state.mapLoadingProgress}%;"></div>
                     </div>
                 </div>
-            `;
-        }
+                <!-- 주소 정보 -->
+                <div class="p-6 bg-gray-50 border-t max-h-40 overflow-y-auto flex-1">
+                    <h4 class="font-bold mb-4">📍 선택된 시설 주소</h4>
+                    <div class="space-y-3">
+                        ${state.mapData.map((item, idx) => `
+                            <div class="bg-white p-4 rounded border-l-4 border-blue-500">
+                                <p class="font-semibold">${item['시설명']}</p>
+                                <p class="text-sm text-gray-600">시설번호: ${item['시설번호']}</p>
+                                <p class="text-sm text-gray-700">📮 ${item['새주소']}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- 버튼 -->
+                <div class="flex gap-3 justify-end p-6 border-t bg-white">
+                    <button id="mapPrintBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">
+                        🖨️ 인쇄
+                    </button>
+                    <button id="mapCancelBtn" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 font-semibold">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+} 
 
         function openDetailModal() {
             if (state.selectedRows.size === 1) {
@@ -3312,8 +3313,12 @@ function addFromAppDetailModal() {
             }
 
             geocoder.addressSearch(address, function(result, status) {
-                processedCount++;
-                state.mapLoadingProgress = Math.floor((processedCount / totalCount) * 100);
+                  processedCount++;
+                    state.mapLoadingProgress = Math.floor((processedCount / totalCount) * 100);
+                    const progressBar = document.getElementById('mapProgressBar');
+                    const progressText = document.getElementById('mapProgressText');
+                    if (progressBar) progressBar.style.width = state.mapLoadingProgress + '%';
+                    if (progressText) progressText.textContent = state.mapLoadingProgress + '%';
                 
                 if (status === kakao.maps.services.Status.OK && result[0]) {
                     const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
@@ -3337,16 +3342,16 @@ function addFromAppDetailModal() {
                 }
 
                 if (processedCount === totalCount) {
-                    setTimeout(function() {
-                        if (!bounds.isEmpty()) {
-                            map.setBounds(bounds);
-                        }
-                        state.isLoadingMap = false;
-                        state.mapLoadingProgress = 100;
-                        const loadingBar = document.querySelector('#mapContainer').parentElement.querySelector('.bg-blue-100');
-                        if (loadingBar) loadingBar.remove();
-                    }, 300);
-                }
+    setTimeout(function() {
+        if (!bounds.isEmpty()) {
+            map.setBounds(bounds);
+        }
+        state.isLoadingMap = false;
+        state.mapLoadingProgress = 100;
+        const loadingBar = document.getElementById('mapLoadingBar');
+        if (loadingBar) loadingBar.style.display = 'none';
+    }, 300);
+}
             });
         });
     });
@@ -4443,13 +4448,20 @@ if (appDetailAddBtn) {
                 }
 
                 if (mapCancelBtn) {
-                    mapCancelBtn.addEventListener('click', () => {
-                        state.showMapModal = false;
-                        state.mapData = [];
-                        state.isLoadingMap = false;
-                        render();
-                    });
-                }
+                mapCancelBtn.addEventListener('click', () => {
+                    state.showMapModal = false;
+                    state.mapData = [];
+                    state.isLoadingMap = false;
+                    render();
+    });
+}
+
+const mapPrintBtn = document.getElementById('mapPrintBtn');
+if (mapPrintBtn) {
+    mapPrintBtn.addEventListener('click', () => {
+        window.print();
+    });
+}
 
                const salesRefreshBtn = document.getElementById('salesRefreshBtn');
                 if (salesRefreshBtn) {
