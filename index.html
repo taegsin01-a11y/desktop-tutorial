@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공인검사기관 안전관리시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script async defer src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=c8f5719a2be48f3875087006ce782934&libraries=services"></script>
+   
+    <style>
+        .scroll-x-auto {
+            -webkit-overflow-scrolling: touch;
+        }
+        .table-cell-input {
+            width: 100%;
+            padding: 2px 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-sky-400 to-sky-200 min-h-screen">
+    <div id="app"></div>
+
+    <script>
+        // ======================== 전역 상태 ========================
+        const state = {
+            currentYear: new Date().getFullYear(),
+            activeTab: '통합',
+            selectedYear: new Date().getFullYear(),
+            data: {},
+            filteredData: [],
+            applicationData: {},
+            quarterData: {},
+            cancellationData: {},
+            pathwayData: {},
+            resourceData: {}, 
+            currentPage: 1,
+            selectedRows: new Set(),
+            isLoading: false,
+            loadingProgress: 0,
+            searchTerm: '',
+            isEditing: false,
+            showAdmin: false,
+            adminPassword: '',
+            showWelcome: true,
+            lastSaved: null,
+            showDownloadMenu: false,
+            uploadedFileName: '',
+            showDuplicateModal: false,
+            duplicateInfo: { duplicates: [], selectedData: [] },
+            inspectionYear: new Date().getFullYear(),
+            targetYear: new Date().getFullYear(),
+            applicationFilters: {
+                region: [],
+                inspector: '',
+                receiptLocation: '',
+                inspectionResult: '',
+                applicationDateFrom: '',
+                applicationDateTo: '',
+                inspectionDateFrom: '',
+                inspectionDateTo: '',
+                baseMonth: '',
+                fee: '',
+                facilityCert: '',
+                certificateStatus: '',
+                insuranceStatus: ''
+            },
+            applicationSearchTerm: '',
+            selectedApplicationRows: new Set(),
+            isEditingApplication: false,
+            currentApplicationPage: 1,
+            selectedQuarterRows: new Set(),
+            isEditingQuarter: false,
+            currentQuarterPage: 1,
+            isEditingCancellation: false,
+            selectedCancellationRows: new Set(),
+            showDeleteModal: false,
+            showAppDeleteModal: false,
+            showDetailModal: false,
+            detailModalData: {},
+            detailModalSelectedIdx: null,
+            showAppDetailModal: false,
+            appDetailModalData: {},
+            appDetailModalSelectedIdx: null,
+            filters: {
+                region: [],
+                month: '',
+                inspectionHistory: ''
+            },
+            showRegionDropdown: false,
+            showMonthDropdown: false,
+            showInspectionDropdown: false,
+            settings: {
+                companyName: '공인검사기관',
+                maxFileSize: 100,
+                autoSave: true,
+                autoSaveInterval: 30
+            },
+            itemsPerPage: 50,
+            inspectors: ['최중수', '김택신', '김춘식', '김정만'],
+            receiptLocations: ['지로', '국민', '부산', '농협', '경남', '후납', '기타'],
+            inspectionResults: ['합격', '불합격', '이중납부','공란', '기타'],
+            yearRange: Array.from({ length: 37 }, (_, i) => 2014 + i),
+            cancelReasons: ['입금 미확인', '고객 요청', '중복 신청', '기타'],
+            showMapModal: false,
+            mapData: [],
+            isLoadingMap: false,
+            mapLoadingProgress: 0,
+            quarter: {
+                selectedQuarter: 'Q1',
+                selectedRecipient: '',
+                quarters: ['1분기', '2분기', '3분기', '4분기'],
+                recipients: {
+                    '부산시청': ['부산 강서구', '부산 남구', '부산 동구', '부산 부산진구', '부산 사상구', '부산 사하구', '부산 서구', '부산 수영구', '부산 영도구', '부산 중구', '부산 해운대구', '부산 금정구', '부산 기장군', '부산 동래구', '부산 연제구', '부산 북구'],
+                    '강서구청장': ['부산 강서구'],
+                    '남구청장': ['부산 남구'],
+                    '동구청장': ['부산 동구'],
+                    '부산진구청장': ['부산 부산진구'],
+                    '사상구청장': ['부산 사상구'],
+                    '사하구청장': ['부산 사하구'],
+                    '서구청장': ['부산 서구'],
+                    '수영구청장': ['부산 수영구'],
+                    '영도구청장': ['부산 영도구'],
+                    '중구청장': ['부산 중구'],
+                    '해운대구청장': ['부산 해운대구'],
+                    '금정구청장': ['부산 금정구'],
+                    '기장군수': ['부산 기장군'],
+                    '동래구청장': ['부산 동래구'],
+                    '연제구청장': ['부산 연제구'],
+                    '북구청장': ['부산 북구'],
+                    '울산광역시 북구청장': ['울산 북구'],
+                    '김해시청': ['경남 김해시'],
+                    '양산시청': ['경남 양산시'],
+                    '사천시청': ['경남 사천시'],
+                    '통영시청': ['경남 통영시'],
+                    '거제시청': ['경남 거제시'],
+                    '포항시청': ['경북 포항시'],
+                    '경주시청': ['경북 경주시'],
+                    '구미시청': ['경북 구미시'],
+                    '한국가스안전공사 부산지역본부': ['부산 강서구', '부산 남구', '부산 동구', '부산 부산진구', '부산 사상구', '부산 사하구', '부산 서구', '부산 수영구', '부산 영도구', '부산 중구'],
+                    '한국가스안전공사 북부지사': ['부산 해운대구', '부산 금정구', '부산 기장군', '부산 동래구', '부산 연제구', '부산 북구'],
+                    '한국가스안전공사 울산지사': ['울산 북구'],
+                    '한국가스안전공사 창원지사': ['경남 김해시', '경남 양산시', '경남 통영시', '경남 거제시'],
+                    '한국가스안전공사 진주지사': ['경남 사천시'],
+                    '한국가스안전공사 경북동부지사': ['경북 포항시', '경북 경주시'],
+                    '한국가스안전공사 대구경북지역본부': ['경북 구미시']
+                }
+            },
+            pathway: {
+                searchTerm: '',
+                selectedRows: new Set(),
+                isEditing: false,
+                currentPage: 1,
+                filters: {
+                    region: ''
+                },
+                showDownloadMenu: false
+            }
+        };
+        
+        const columns = [
+            '시설번호', '시설명', '행정구역', '새주소', '구주소', '월사용예정량', 
+            '전화번호', '기준일', '안전관리자명', '자격증번호', '보험사', '보험만기일', 
+            '메모', '검사일', '신청일', '검사원', '검사결과', '필증번호', '수수료', 
+            '접수처', '계산서발행일', '비고', '검사확인', '사업자번호', '대표자명', 
+            '업태', '종목', '이메일', '면제대상', '검사이력'
+        ];
+
+        const applicationColumns = [
+            '시설번호', '시설명', '행정구역', '새주소', '구주소', '월사용예정량', 
+            '전화번호', '기준일', '안전관리자명', '자격증번호', '보험사', '보험만기일', 
+            '메모', '검사일', '신청일', '검사원', '검사결과', '필증번호', '수수료', 
+            '접수처', '계산서발행일', '메모2', '검사확인'
+        ];
+
+        const quarterColumns = [
+            '분기', '시설번호', '시설명', '행정구역', '신청일', '검사일', '검사원', '검사결과', '필증번호', '메모'
+        ];
+
+        const cancellationColumns = [
+            '시설번호', '시설명', '행정구역', '새주소', '신청일', '취소사유', '취소일', '수수료', '접수처','계좌', '비고'
+        ];
+
+        const pathwayColumns = [
+            '시설번호', '시설명', '행정구역', '읍면동', '새주소', '전화번호', '사용가스', '차단기', '타이머', 'CO경보기', '누설', '점검일', '점검자', '비고', '참조'
+        ];
+
+        const pathwayOptions = {
+            regions: ['울주군', '북구', '남구', '중구', '동구'],
+            gas: ['LPG', '도시가스', 'LPG+도시가스'],
+            device: ['설치', '미설치', '불량', '해당없슴'],
+            leak: ['유', '무'],
+            inspectors: ['최중수', '김택신', '김춘식']
+        };
+
+        const columnWidths = {
+            '시설번호': '120px', '시설명': '150px', '행정구역': '100px', '새주소': '200px',
+            '구주소': '120px', '월사용예정량': '100px', '전화번호': '110px', '기준일': '100px',
+            '안전관리자명': '90px', '자격증번호': '120px', '보험사': '70px', '보험만기일': '100px',
+            '메모': '150px', '검사일': '100px', '신청일': '100px', '검사원': '90px',
+            '검사결과': '70px', '필증번호': '140px', '수수료': '80px', '접수처': '70px',
+            '계산서발행일': '110px', '메모2': '150px', '검사확인': '70px',
+            '취소번호': '120px', '취소사유': '150px', '취소일': '100px', '처리자': '90px', '비고': '150px'
+        };
+
+        // ======================== 유틸리티 함수 ========================
+        function formatCurrency(value) {
+            if (!value || value === '') return '';
+            const num = parseInt(String(value).replace(/,/g, ''));
+            if (isNaN(num)) return value;
+            return num.toLocaleString();
+        }
+
+        function saveToLocalStorage(dataToSave) {
+            try {
+                const jsonString = JSON.stringify(dataToSave);
+                const sizeInMB = (new Blob([jsonString]).size / (1024 * 1024)).toFixed(2);
+                
+                if (parseFloat(sizeInMB) > 15) {
+                    console.warn(`⚠️ 데이터 크기가 큽니다: ${sizeInMB}MB`);
+                    return false;
+                }
+                
+                localStorage.setItem('safetySystemData', jsonString);
+                console.log(`✅ 저장 완료 (${sizeInMB}MB)`);
+                return true;
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    console.error('⚠️ 저장 공간 초과. 데이터를 정리하세요.');
+                    state.settings.autoSave = false;
+                    return false;
+                }
+                console.error('저장 오류:', e);
+                return false;
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const savedData = localStorage.getItem('safetySystemData');
+                if (savedData) {
+                    const parsed = JSON.parse(savedData);
+                    if (parsed.data) state.data = parsed.data;
+                    if (parsed.applicationData) state.applicationData = parsed.applicationData;
+                    if (parsed.quarterData) state.quarterData = parsed.quarterData;
+                    if (parsed.cancellationData) state.cancellationData = parsed.cancellationData;
+                    if (parsed.pathwayData) state.pathwayData = parsed.pathwayData;
+                    if (parsed.resourceData) state.resourceData = parsed.resourceData;
+                    if (parsed.settings) state.settings = parsed.settings;
+                    if (parsed.uploadedFileName) state.uploadedFileName = parsed.uploadedFileName;
+                    if (parsed.selectedYear) state.selectedYear = parsed.selectedYear;
+                    if (parsed.lastSaved) state.lastSaved = new Date(parsed.lastSaved);
+                    
+                    const totalData = Object.values(state.data).reduce((sum, yearData) => sum + yearData.length, 0);
+                    if (totalData > 0) {
+                        state.showWelcome = false;
+                        const sizeInMB = (new Blob([savedData]).size / (1024 * 1024)).toFixed(2);
+                        console.log(`✅ 저장된 데이터 복원: ${totalData}건 (${sizeInMB}MB)`);
+                    }
+                }
+            } catch (e) {
+                console.error('데이터 로드 실패:', e);
+            }
+        }
+
+        function getStorageSize() {
+            try {
+                const savedData = localStorage.getItem('safetySystemData');
+                if (savedData) {
+                    const sizeInMB = (new Blob([savedData]).size / (1024 * 1024)).toFixed(2);
+                    return sizeInMB;
+                }
+                return '0.00';
+            } catch (e) {
+                return 'N/A';
+            }
+        }
+
+        function normalizeDate(dateValue) {
+            if (!dateValue || dateValue === '') return '';
+            
+            if (typeof dateValue === 'number') {
+                const date = new Date((dateValue - 25569) * 86400 * 1000);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            
+            const dateStr = String(dateValue).trim();
+            
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+            
+            if (/^\d{4}\.\d{1,2}\.\d{1,2}$/.test(dateStr)) {
+                const parts = dateStr.split('.');
+                const year = parts[0];
+                const month = String(parts[1]).padStart(2, '0');
+                const day = String(parts[2]).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            
+            if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(dateStr)) {
+                const parts = dateStr.split('/');
+                const year = parts[0];
+                const month = String(parts[1]).padStart(2, '0');
+                const day = String(parts[2]).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+                const parts = dateStr.split('/');
+                const year = parts[2];
+                const month = String(parts[0]).padStart(2, '0');
+                const day = String(parts[1]).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            
+            return dateStr;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            try {
+                const date = new Date(dateString);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}.${month}.${day}`;
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        function getQuarterFromDate(dateString) {
+            if (!dateString) return '';
+            try {
+                const match = dateString.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
+                if (match) {
+                    const month = parseInt(match[2]);
+                    if (month <= 3) return 'Q1';
+                    if (month <= 6) return 'Q2';
+                    if (month <= 9) return 'Q3';
+                    return 'Q4';
+                }
+            } catch (e) {}
+            return '';
+        }
+
+        function generateCertificateNumber(date, year) {
+            if (!date || date === '') {
+                return '';
+            }
+            
+            const allAppData = Object.values(state.applicationData).flat();
+            
+            if (state.targetYear !== state.inspectionYear) {
+                const yy = String(state.inspectionYear).slice(2);
+                const prefix = `KGT${yy}0101`;
+                
+                const existingNumbers = allAppData
+                    .filter(row => row['필증번호']?.startsWith(prefix))
+                    .map(row => {
+                        const match = row['필증번호']?.match(/-(\d{3})$/);
+                        return match ? parseInt(match[1]) : 0;
+                    })
+                    .filter(num => num > 0);
+                
+                const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+                return `${prefix}-${String(nextNumber).padStart(3, '0')}`;
+            }
+            
+            const targetDate = new Date(date);
+            const yy = String(targetDate.getFullYear()).slice(2);
+            const MM = String(targetDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(targetDate.getDate()).padStart(2, '0');
+            
+            const prefix = `KGT${yy}${MM}${dd}`;
+            
+            const existingNumbers = allAppData
+                .filter(row => row['필증번호']?.startsWith(prefix))
+                .map(row => {
+                    const match = row['필증번호']?.match(/-(\d{3})$/);
+                    return match ? parseInt(match[1]) : 0;
+                })
+                .filter(num => num > 0);
+            
+            const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+            return `${prefix}-${String(nextNumber).padStart(3, '0')}`;
+        }
+
+        function parseExcelFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onerror = () => reject(new Error('파일 읽기 실패'));
+                
+                reader.onload = (e) => {
+                    try {
+                        state.loadingProgress = 60;
+                        render();
+                        
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        state.loadingProgress = 70;
+                        render();
+                        
+                        let targetSheet = null;
+                        let maxRows = 0;
+
+                        if (workbook.SheetNames.includes('접수')) {
+                            targetSheet = workbook.Sheets['접수'];
+                        } else {
+                            workbook.SheetNames.forEach(sheetName => {
+                                const sheet = workbook.Sheets[sheetName];
+                                const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                                if (data.length > maxRows) {
+                                    maxRows = data.length;
+                                    targetSheet = sheet;
+                                }
+                            });
+                        }
+
+                        if (!targetSheet) {
+                            targetSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        }
+
+                        const jsonData = XLSX.utils.sheet_to_json(targetSheet, { header: 1 });
+                        
+                        if (jsonData.length < 2) {
+                            reject(new Error('데이터가 없거나 형식이 올바르지 않습니다.'));
+                            return;
+                        }
+                        
+                        state.loadingProgress = 85;
+                        render();
+                        
+                        const headers = jsonData[0].map(h => String(h || '').trim());
+                        const dateColumns = ['기준일', '검사일', '신청일', '보험만기일', '계산서발행일'];
+                        const parsedData = [];
+                        
+                        for (let i = 1; i < jsonData.length; i++) {
+                            const hasData = jsonData[i].some(cell => cell !== undefined && cell !== null && String(cell).trim() !== '');
+                            if (!hasData) continue;
+    
+                            const obj = {};
+                            headers.forEach((header, idx) => {
+                                let value = jsonData[i][idx];
+                                if (value === undefined || value === null) {
+                                    obj[header] = '';
+                                } else {
+                                    if (dateColumns.includes(header)) {
+                                        obj[header] = normalizeDate(value);
+                                    } else {
+                                        obj[header] = String(value).trim();
+                                    }
+                                }
+                            });
+                            parsedData.push(obj);
+                        }
+                        
+                        state.loadingProgress = 100;
+                        render();
+                        resolve(parsedData);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function parseCSVFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onerror = () => reject(new Error('파일 읽기 실패'));
+                
+                reader.onload = (e) => {
+                    try {
+                        state.loadingProgress = 60;
+                        render();
+                        
+                        const text = e.target.result;
+                        
+                        if (!text || text.trim() === '') {
+                            reject(new Error('파일이 비어있습니다.'));
+                            return;
+                        }
+
+                        const lines = text
+                            .replace(/\r\n/g, '\n')
+                            .split('\n')
+                            .map(line => line.trim())
+                            .filter(line => line.length > 0);
+
+                        if (lines.length < 2) {
+                            reject(new Error('데이터가 없거나 형식이 올바르지 않습니다.'));
+                            return;
+                        }
+
+                        state.loadingProgress = 80;
+                        render();
+                        
+                        const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+                        const dateColumns = ['기준일', '검사일', '신청일', '보험만기일', '계산서발행일'];
+                        
+                        const parsedData = [];
+                        for (let i = 1; i < lines.length; i++) {
+                            const line = lines[i];
+                            if (!line.trim()) continue;
+                            
+                            const values = [];
+                            let currentValue = '';
+                            let insideQuotes = false;
+                            
+                            for (let j = 0; j < line.length; j++) {
+                                const char = line[j];
+                                if (char === '"') {
+                                    insideQuotes = !insideQuotes;
+                                } else if (char === ',' && !insideQuotes) {
+                                    values.push(currentValue.trim().replace(/^"|"$/g, ''));
+                                    currentValue = '';
+                                } else {
+                                    currentValue += char;
+                                }
+                            }
+                            values.push(currentValue.trim().replace(/^"|"$/g, ''));
+                            
+                            while (values.length < headers.length) {
+                                values.push('');
+                            }
+
+                            const hasData = values.some(v => v && String(v).trim() !== '');
+                            if (!hasData) continue;
+
+                            const obj = {};
+                            headers.forEach((header, idx) => {
+                                let value = (values[idx] || '').replace(/[\\]/g, '').trim();
+                                if (dateColumns.includes(header)) {
+                                    obj[header] = normalizeDate(value);
+                                } else {
+                                    obj[header] = value;
+                                }
+                            });
+                            parsedData.push(obj);
+                        }
+
+                        state.loadingProgress = 100;
+                        render();
+                        resolve(parsedData);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                reader.readAsText(file, 'EUC-KR');
+            });
+        }
+
+        async function handleFileUpload(file) {
+            if (!file) return;
+
+            const maxSize = state.settings.maxFileSize * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert(`파일 크기가 ${state.settings.maxFileSize}MB를 초과합니다.`);
+                return;
+            }
+
+            state.isLoading = true;
+            state.loadingProgress = 30;
+            state.uploadedFileName = file.name;
+            render();
+
+            try {
+                let parsedData;
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                
+                if (fileExt === 'xlsx' || fileExt === 'xls') {
+                    parsedData = await parseExcelFile(file);
+                } else if (fileExt === 'csv') {
+                    parsedData = await parseCSVFile(file);
+                } else {
+                    throw new Error('지원하지 않는 파일 형식입니다. (.xlsx, .xls, .csv만 가능)');
+                }
+
+                if (parsedData.length === 0) {
+                    alert('유효한 데이터가 없습니다.');
+                    state.isLoading = false;
+                    render();
+                    return;
+                }
+
+                if (!state.data[state.selectedYear]) {
+                    state.data[state.selectedYear] = [];
+                }
+                state.data[state.selectedYear] = parsedData;
+                
+                state.lastSaved = new Date();
+                
+                setTimeout(() => {
+                    state.isLoading = false;
+                    const storageSize = getStorageSize();
+                    let message = `✅ ${parsedData.length}개의 데이터가 ${state.selectedYear}년도로 업로드되었습니다.\n파일명: ${file.name}`;
+                    
+                    if (parseFloat(storageSize) > 3) {
+                        message += `\n\n⚠️ 저장 공간: ${storageSize}MB/5MB\n공간이 부족하면 자동 저장이 실패할 수 있습니다.`;
+                    }
+                    
+                    alert(message);
+                    saveDataToStorage();
+                    render();
+                }, 300);
+
+            } catch (error) {
+                console.error('파일 처리 오류:', error);
+                alert('파일 처리 중 오류가 발생했습니다: ' + error.message);
+                state.isLoading = false;
+                render();
+            }
+        }
+
+        function downloadAsExcel() {
+            const dataToDownload = state.selectedRows.size > 0
+                ? state.filteredData.filter((_, idx) => state.selectedRows.has(idx))
+                : state.filteredData;
+
+            if (dataToDownload.length === 0) {
+                alert('다운로드할 데이터가 없습니다.');
+                return;
+            }
+
+            const worksheet = XLSX.utils.json_to_sheet(dataToDownload, { header: columns });
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, '안전관리');
+            
+            const wscols = columns.map(() => ({ wch: 15 }));
+            worksheet['!cols'] = wscols;
+            
+            const fileName = `안전관리_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+            
+            state.showDownloadMenu = false;
+            render();
+        }
+
+        function downloadAsCSV() {
+            const dataToDownload = state.selectedRows.size > 0
+                ? state.filteredData.filter((_, idx) => state.selectedRows.has(idx))
+                : state.filteredData;
+
+            if (dataToDownload.length === 0) {
+                alert('다운로드할 데이터가 없습니다.');
+                return;
+            }
+
+            const csvContent = [
+                columns.join(','),
+                ...dataToDownload.map(row => 
+                    columns.map(col => {
+                        const value = row[col] || '';
+                        return value.includes(',') || value.includes('"') 
+                            ? `"${value.replace(/"/g, '""')}"` 
+                            : value;
+                    }).join(',')
+                )
+            ].join('\n');
+
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `안전관리_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            state.showDownloadMenu = false;
+            render();
+        }
+
+        function createSampleData() {
+            const sampleData = [
+                {
+                    '시설번호': '00458912-0001', '시설명': '장수마을목욕탕', '행정구역': '부산',
+                    '새주소': '부산광역시 기장군 기장읍 교리 334-6번지', '구주소': '',
+                    '월사용예정량': '6,334.00㎡', '전화번호': '051-724-2552', '기준일': '2025-02-03',
+                    '안전관리자명': '', '자격증번호': '', '보험사': '', '보험만기일': '2028-11-22',
+                    '메모': '', '검사일': '2002-01-30', '신청일': '', '검사원': '문서영',
+                    '검사결과': '', '필증번호': '', '수수료': '', '접수처': '비대상',
+                    '계산서발행일': '', '비고': '', '검사확인': '', '사업자번호': '',
+                    '대표자명': '', '업태': '', '종목': '', '이메일': '', '면제대상': '', '검사이력': 'Y'
+                },
+                {
+                    '시설번호': '01525996-0001', '시설명': '피플러한의원', '행정구역': '부산',
+                    '새주소': '부산광역시 기장군 정관읍 용수리 12 83-3번지', '구주소': '',
+                    '월사용예정량': '1,322.00㎡', '전화번호': '051-728-6999', '기준일': '2025-05-07',
+                    '안전관리자명': '', '자격증번호': '', '보험사': '', '보험만기일': '',
+                    '메모': '', '검사일': '2011-01-05', '신청일': '', '검사원': '',
+                    '검사결과': '', '필증번호': '', '수수료': '', '접수처': '비대상',
+                    '계산서발행일': '', '비고': '', '검사확인': '', '사업자번호': '',
+                    '대표자명': '', '업태': '', '종목': '', '이메일': '', '면제대상': '', '검사이력': ''
+                }
+            ];
+            if (!state.data[state.selectedYear]) {
+                state.data[state.selectedYear] = [];
+            }
+            state.data[state.selectedYear] = sampleData;
+            state.uploadedFileName = '샘플데이터.xlsx';
+            state.lastSaved = new Date();
+            state.showWelcome = false;
+            alert('샘플 데이터 2건이 생성되었습니다.');
+            saveDataToStorage();
+            updateFilters();
+            render();
+        }
+
+        function updateFilters() {
+            let result = [...(state.data[state.selectedYear] || [])];
+            
+            if (state.filters.region.length > 0) {
+                result = result.filter(row => {
+                    const region = (row['행정구역'] || '').replace(/[\\\/]/g, '').trim();
+                    return state.filters.region.includes(region);
+                });
+            }
+            
+            if (state.filters.inspectionHistory) {
+                result = result.filter(row => {
+                    const history = row['검사이력'];
+                    if (state.filters.inspectionHistory === 'Y') return history === 'Y';
+                    if (state.filters.inspectionHistory === 'N') return !history || history === '' || history === 'N';
+                    return true;
+                });
+            }
+            
+            if (state.searchTerm) {
+                result = result.filter(row =>
+                    Object.values(row).some(val =>
+                        String(val).toLowerCase().includes(state.searchTerm.toLowerCase())
+                    )
+                );
+            }
+            
+            state.filteredData = result;
+            state.currentPage = 1;
+        }
+
+        function copyToApplication() {
+            const selectedData = state.filteredData.filter((_, idx) => state.selectedRows.has(idx));
+            
+            if (selectedData.length === 0) {
+                alert('복사할 데이터를 선택해주세요.');
+                return;
+            }
+
+            if (!state.applicationData[state.targetYear]) {
+                state.applicationData[state.targetYear] = [];
+            }
+
+            const duplicates = selectedData.filter(item =>
+                state.applicationData[state.targetYear].some(app => app['시설번호'] === item['시설번호'])
+            );
+
+            if (duplicates.length > 0) {
+                state.duplicateInfo = { duplicates, selectedData };
+                state.showDuplicateModal = true;
+                render();
+                return;
+            }
+
+            selectedData.forEach(row => {
+                if (row['신청일'] && row['신청일'] !== '') {
+                    row['필증번호'] = generateCertificateNumber(row['신청일'], state.targetYear);
+                } else {
+                    row['필증번호'] = '';
+                }
+            });
+
+            const existingData = state.applicationData[state.targetYear] || [];
+            state.applicationData[state.targetYear] = [...selectedData, ...existingData];
+                
+            state.activeTab = '신청접수대장';
+            state.selectedRows = new Set();
+            alert(`${selectedData.length}개 항목이 신청접수대장으로 복사되었습니다.`);
+            saveDataToStorage();
+            render();
+        }
+
+        function saveDataToStorage() {
+            const toSave = {
+                data: state.data,
+                applicationData: state.applicationData,
+                quarterData: state.quarterData,
+                cancellationData: state.cancellationData,
+                pathwayData: state.pathwayData,
+                resourceData: state.resourceData,
+                settings: state.settings,
+                uploadedFileName: state.uploadedFileName,
+                selectedYear: state.selectedYear,
+                lastSaved: new Date().toISOString(),
+                timestamp: new Date().toISOString()
+            };
+            const saved = saveToLocalStorage(toSave);
+            if (saved) {
+                state.lastSaved = new Date();
+            } else {
+                console.warn('⚠️ 저장 실패. 불필요한 데이터를 삭제해주세요.');
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ 모든 데이터를 삭제하시겠습니까?\n(저장된 데이터도 모두 삭제됩니다)')) {
+                localStorage.removeItem('safetySystemData');
+                state.data = {};
+                state.applicationData = {};
+                state.quarterData = {};
+                state.cancellationData = {};
+                state.pathwayData = {};
+                state.resourceData = {};
+                state.uploadedFileName = '';
+                state.lastSaved = null;
+                state.showWelcome = true;
+                state.showAdmin = false;
+                alert('✅ 모든 데이터가 삭제되었습니다.');
+                render();
+            }
+        }
+
+        // ======================== 렌더링 함수 (간략화) ========================
+        function render() {
+            try {
+                updateFilters();
+                const app = document.getElementById('app');
+                if (!app) {
+                    console.error('#app 요소를 찾을 수 없습니다.');
+                    return;
+                }
+                app.innerHTML = renderApp();
+                attachEventListeners();
+            } catch (error) {
+                console.error('렌더링 오류:', error);
+                const app = document.getElementById('app');
+                if (app) {
+                    app.innerHTML = `<div class="p-6 bg-red-100 border border-red-400 text-red-700 rounded">오류가 발생했습니다: ${error.message}</div>`;
+                }
+            }
+        }
+
+        function renderApp() {
+            return `
+                <div class="min-h-screen bg-gradient-to-b from-sky-400 to-sky-200">
+                    ${renderHeader()}
+                    ${renderTabs()}
+                    <div class="container mx-auto px-4 py-6">
+                        ${renderContent()}
+                    </div>
+                    ${renderFooter()}
+                    ${state.isLoading ? renderLoadingModal() : ''}
+                </div>
+            `;
+        }
+
+        function renderHeader() {
+            const years = Array.from({ length: 10 }, (_, i) => state.currentYear - i);
+            return `
+                <div class="bg-gradient-to-r from-sky-400 to-sky-500 text-white">
+                    <div class="container mx-auto px-4 py-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-3xl font-bold">공인검사기관</h1>
+                                <p class="text-lg">안전관리시스템 v2.0 💾 (GitHub Pages)</p>
+                            </div>
+                            <div class="text-right">
+                                <label class="block text-sm mb-1">당해 연도</label>
+                                <select id="yearSelect" class="px-4 py-2 text-gray-900 rounded border-2 border-white">
+                                    ${years.map(year => `<option value="${year}" ${year === state.selectedYear ? 'selected' : ''}>${year}년</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTabs() {
+            const tabs = ['통합', '신청접수대장', '분기', '경로당', '매출분석', '취소', '자료실', '관리자'];
+            return `
+                <div class="bg-white border-b shadow-sm">
+                    <div class="container mx-auto px-4">
+                        <div class="flex gap-1 overflow-x-auto">
+                            ${tabs.map(tab => `
+                                <button class="tab-btn px-6 py-3 font-semibold whitespace-nowrap ${state.activeTab === tab ? 'bg-blue-600 text-white border-b-4 border-blue-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}" data-tab="${tab}">
+                                    ${tab}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderContent() {
+            if (state.showWelcome && Object.keys(state.data).length === 0 && state.activeTab === '통합') {
+                return renderWelcome();
+            }
+            
+            if (state.activeTab === '관리자') {
+                return renderAdmin();
+            }
+            
+            return renderMainTab();
+        }
+
+        function renderWelcome() {
+            return `
+                <div class="flex items-center justify-center min-h-96">
+                    <div class="bg-white p-12 rounded-2xl shadow-2xl max-w-2xl text-center">
+                        <h2 class="text-4xl font-bold mb-6 text-blue-600">👋 환영합니다!</h2>
+                        <p class="text-xl mb-8 text-gray-700">공인검사기관 안전관리시스템</p>
+                        <p class="text-sm mb-8 text-green-600">✅ GitHub Pages에서 실행 중</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <button id="sampleDataBtn" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-6 rounded-xl hover:from-blue-600 hover:to-blue-700 shadow-lg transform hover:scale-105 transition-all">
+                                <div class="text-5xl mb-3">🎯</div>
+                                <div class="text-xl font-bold mb-2">샘플 데이터로 시작</div>
+                                <div class="text-sm opacity-90">2건의 테스트 데이터 생성</div>
+                            </button>
+
+                            <label class="bg-gradient-to-r from-green-500 to-green-600 text-white px-8 py-6 rounded-xl hover:from-green-600 hover:to-green-700 shadow-lg transform hover:scale-105 transition-all cursor-pointer">
+                                <div class="text-5xl mb-3">📁</div>
+                                <div class="text-xl font-bold mb-2">파일 업로드</div>
+                                <div class="text-sm opacity-90">Excel/CSV로 시작하기</div>
+                                <input type="file" id="welcomeFileInput" accept=".csv,.xlsx,.xls" class="hidden" />
+                            </label>
+                        </div>
+
+                        <button id="emptyStartBtn" class="mt-6 text-gray-500 hover:text-gray-700 underline">
+                            빈 화면으로 시작
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAdmin() {
+            if (!state.showAdmin) {
+                return `
+                    <div class="flex items-center justify-center h-96">
+                        <div class="bg-white p-8 rounded-lg shadow-lg w-96">
+                            <h2 class="text-xl font-bold mb-4">관리자 로그인</h2>
+                            <input type="password" id="adminPassword" placeholder="비밀번호 입력" class="w-full px-4 py-2 border rounded mb-4" />
+                            <button id="adminLoginBtn" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                로그인
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const totalMainData = Object.values(state.data).reduce((sum, yearData) => sum + yearData.length, 0);
+            
+            return `
+                <div class="p-6 bg-white rounded-lg">
+                    <h2 class="text-2xl font-bold mb-6">시스템 관리</h2>
+                    <div class="space-y-6">
+                        <div class="border-b pb-4">
+                            <h3 class="text-lg font-semibold mb-4">시스템 정보</h3>
+                            <div class="bg-gray-50 p-4 rounded space-y-2 text-sm">
+                                <p><strong>버전:</strong> 2.0.0 (GitHub Pages)</p>
+                                <p><strong>전체 데이터:</strong> ${totalMainData}건</p>
+                                <p><strong>마지막 저장:</strong> ${state.lastSaved ? state.lastSaved.toLocaleString() : '저장 기록 없음'}</p>
+                                <p><strong>저장 공간:</strong> ${getStorageSize()} MB / ~5 MB</p>
+                            </div>
+                        </div>
+                        <div class="border-b pb-4">
+                            <h3 class="text-lg font-semibold mb-4 text-red-600">위험 구역</h3>
+                            <button id="clearAllBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 font-semibold">
+                                🗑️ 모든 데이터 초기화
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMainTab() {
+            const totalPages = Math.ceil(state.filteredData.length / state.itemsPerPage);
+            const paginatedData = state.filteredData.slice(
+                (state.currentPage - 1) * state.itemsPerPage,
+                state.currentPage * state.itemsPerPage
+            );
+
+            return `
+                <div>
+                    <div class="bg-white rounded-lg p-4 mb-4 shadow">
+                        <div class="flex gap-2 mb-4 flex-wrap">
+                            <button id="uploadBtn" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer">
+                                📤 업로드
+                            </button>
+                            <button id="downloadBtn" class="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                                📥 다운로드
+                            </button>
+                            <button id="sampleBtn" class="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">
+                                🎯 샘플 데이터
+                            </button>
+                            <button id="saveBtn" class="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                                💾 저장
+                            </button>
+                            <button id="copyBtn" class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+                                📋 신청
+                            </button>
+                        </div>
+
+                        ${state.uploadedFileName ? `
+                            <div class="mb-4 px-3 py-2 bg-blue-50 border border-blue-200 rounded text-sm flex items-center justify-between">
+                                <span>📂 <strong>${state.uploadedFileName}</strong> (${(state.data[state.selectedYear] || []).length}건)</span>
+                                ${state.lastSaved ? `<span class="text-gray-600 text-xs">마지막 저장: ${state.lastSaved.toLocaleTimeString()}</span>` : ''}
+                            </div>
+                        ` : ''}
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">검색</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="searchInput" value="${state.searchTerm}" placeholder="검색..." class="flex-1 px-3 py-2 border rounded text-sm" />
+                                    <button id="searchBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold">
+                                        🔍
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="overflow-x-auto" style="max-height: 600px;">
+                            <table class="w-full border-collapse" style="table-layout: fixed; min-width: 4500px;">
+                                <thead class="bg-blue-600 text-white sticky top-0 z-10">
+                                    <tr>
+                                        <th class="border px-2 py-2 sticky left-0 bg-blue-600 z-20" style="width: 50px;">
+                                            <input type="checkbox" id="selectAllRows" ${state.selectedRows.size === state.filteredData.length && state.filteredData.length > 0 ? 'checked' : ''} />
+                                        </th>
+                                        <th class="border px-2 py-2 sticky left-[50px] bg-blue-600 z-20" style="width: 60px;">No</th>
+                                        ${columns.map(col => `
+                                            <th class="border px-3 py-2 text-sm" style="width: ${columnWidths[col]};">
+                                                <div class="truncate" title="${col}">${col}</div>
+                                            </th>
+                                        `).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${paginatedData.map((row, idx) => {
+                                        const actualIdx = (state.currentPage - 1) * state.itemsPerPage + idx;
+                                        return `
+                                            <tr class="${state.selectedRows.has(actualIdx) ? 'bg-blue-50' : 'hover:bg-gray-50'}">
+                                                <td class="border px-2 py-2 text-center sticky left-0 bg-white z-10" style="width: 50px;">
+                                                    <input type="checkbox" class="row-checkbox" data-idx="${actualIdx}" ${state.selectedRows.has(actualIdx) ? 'checked' : ''} />
+                                                </td>
+                                                <td class="border px-2 py-2 text-center sticky left-[50px] bg-white z-10" style="width: 60px;">${actualIdx + 1}</td>
+                                                ${columns.map(col => `
+                                                    <td class="border px-3 py-2 text-sm" style="width: ${columnWidths[col]}; max-width: ${columnWidths[col]};">
+                                                        <div class="truncate" title="${row[col] || '-'}">${row[col] || '-'}</div>
+                                                    </td>
+                                                `).join('')}
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                    ${paginatedData.length === 0 ? `
+                                        <tr>
+                                            <td colspan="${columns.length + 2}" class="text-center py-8 text-gray-500">
+                                                <div class="text-4xl mb-2">📋</div>
+                                                <div>데이터가 없습니다</div>
+                                            </td>
+                                        </tr>
+                                    ` : ''}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="flex items-center justify-between px-4 py-3 border-t bg-gray-50">
+                            <div class="text-sm text-gray-600">
+                                전체 ${state.filteredData.length}건
+                                ${state.selectedRows.size > 0 ? ` (${state.selectedRows.size}건 선택됨)` : ''}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button id="prevPageBtn" ${state.currentPage === 1 ? 'disabled' : ''} class="p-2 border rounded hover:bg-gray-100 disabled:opacity-50">◀</button>
+                                <span class="px-4 py-2">${state.currentPage} / ${totalPages || 1}</span>
+                                <button id="nextPageBtn" ${state.currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} class="p-2 border rounded hover:bg-gray-100 disabled:opacity-50">▶</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLoadingModal() {
+            return `
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white p-8 rounded-lg shadow-xl text-center">
+                        <div class="animate-pulse text-4xl mb-4">⏳</div>
+                        <p class="text-lg font-semibold mb-2">파일 처리 중...</p>
+                        <div class="w-64 bg-gray-200 rounded-full h-4 mb-2">
+                            <div class="bg-blue-600 h-4 rounded-full transition-all" style="width: ${state.loadingProgress}%;"></div>
+                        </div>
+                        <p class="text-sm text-gray-600">${state.loadingProgress}%</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFooter() {
+            return `
+                <div class="container mx-auto px-4 py-4 text-sm text-gray-600 flex items-center justify-between">
+                    <p>검색결과 (Total: ${state.filteredData.length}개)</p>
+                    <div class="flex items-center gap-4">
+                        ${state.settings.autoSave && state.lastSaved ? `
+                            <p class="text-xs text-gray-500 flex items-center gap-2">
+                                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                자동저장 활성 | 마지막 저장: ${state.lastSaved.toLocaleTimeString()}
+                            </p>
+                        ` : ''}
+                        <p class="text-xs text-green-600 font-semibold">💾 GitHub Pages</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ======================== 이벤트 리스너 ========================
+        function attachEventListeners() {
+            try {
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        state.activeTab = e.target.dataset.tab;
+                        render();
+                    });
+                });
+
+                const yearSelect = document.getElementById('yearSelect');
+                if (yearSelect) yearSelect.addEventListener('change', (e) => {
+                    state.selectedYear = parseInt(e.target.value);
+                    render();
+                });
+
+                const sampleDataBtn = document.getElementById('sampleDataBtn');
+                if (sampleDataBtn) sampleDataBtn.addEventListener('click', createSampleData);
+
+                const welcomeFileInput = document.getElementById('welcomeFileInput');
+                if (welcomeFileInput) {
+                    welcomeFileInput.addEventListener('change', (e) => {
+                        handleFileUpload(e.target.files[0]);
+                    });
+                }
+
+                const emptyStartBtn = document.getElementById('emptyStartBtn');
+                if (emptyStartBtn) {
+                    emptyStartBtn.addEventListener('click', () => {
+                        state.showWelcome = false;
+                        render();
+                    });
+                }
+
+                const adminLoginBtn = document.getElementById('adminLoginBtn');
+                if (adminLoginBtn) {
+                    adminLoginBtn.addEventListener('click', () => {
+                        const pwd = document.getElementById('adminPassword').value;
+                        if (pwd === 'kgt7848848!') {
+                            state.showAdmin = true;
+                            render();
+                        } else {
+                            alert('비밀번호가 올바르지 않습니다.');
+                        }
+                    });
+                }
+
+                const clearAllBtn = document.getElementById('clearAllBtn');
+                if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllData);
+
+                const uploadBtn = document.getElementById('uploadBtn');
+                if (uploadBtn) {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.csv,.xlsx,.xls';
+                    uploadBtn.addEventListener('click', () => input.click());
+                    input.addEventListener('change', (e) => handleFileUpload(e.target.files[0]));
+                }
+
+                const downloadBtn = document.getElementById('downloadBtn');
+                if (downloadBtn) {
+                    downloadBtn.addEventListener('click', downloadAsExcel);
+                }
+
+                const sampleBtn = document.getElementById('sampleBtn');
+                if (sampleBtn) sampleBtn.addEventListener('click', createSampleData);
+
+                const saveBtn = document.getElementById('saveBtn');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', () => {
+                        saveDataToStorage();
+                        alert('💾 데이터가 저장되었습니다.');
+                    });
+                }
+
+                const copyBtn = document.getElementById('copyBtn');
+                if (copyBtn) copyBtn.addEventListener('click', copyToApplication);
+
+                const searchBtn = document.getElementById('searchBtn');
+                if (searchBtn) {
+                    searchBtn.addEventListener('click', () => {
+                        const searchInput = document.getElementById('searchInput');
+                        if (searchInput) {
+                            state.searchTerm = searchInput.value;
+                        }
+                        state.currentPage = 1;
+                        render();
+                    });
+                }
+
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            state.searchTerm = e.target.value;
+                            state.currentPage = 1;
+                            render();
+                        }
+                    });
+                }
+
+                const selectAllRows = document.getElementById('selectAllRows');
+                if (selectAllRows) {
+                    selectAllRows.addEventListener('change', () => {
+                        if (selectAllRows.checked) {
+                            state.selectedRows = new Set(state.filteredData.map((_, i) => i));
+                        } else {
+                            state.selectedRows = new Set();
+                        }
+                        render();
+                    });
+                }
+
+                document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => {
+                        const idx = parseInt(e.target.dataset.idx);
+                        if (e.target.checked) {
+                            state.selectedRows.add(idx);
+                        } else {
+                            state.selectedRows.delete(idx);
+                        }
+                    });
+                });
+
+                const prevPageBtn = document.getElementById('prevPageBtn');
+                if (prevPageBtn) {
+                    prevPageBtn.addEventListener('click', () => {
+                        state.currentPage = Math.max(1, state.currentPage - 1);
+                        render();
+                    });
+                }
+
+                const nextPageBtn = document.getElementById('nextPageBtn');
+                if (nextPageBtn) {
+                    nextPageBtn.addEventListener('click', () => {
+                        const totalPages = Math.ceil(state.filteredData.length / state.itemsPerPage);
+                        state.currentPage = Math.min(totalPages, state.currentPage + 1);
+                        render();
+                    });
+                }
+
+            } catch (error) {
+                console.error('이벤트 리스너 첨부 오류:', error);
+            }
+        }
+
+        // ======================== 초기화 ========================
+        window.addEventListener('load', function() {
+            try {
+                loadFromLocalStorage();
+                updateFilters();
+                render();
+            } catch (error) {
+                console.error('초기화 오류:', error);
+            }
+        });
+
+        setInterval(() => {
+            if (state.settings.autoSave && (Object.keys(state.data).length > 0 || Object.keys(state.applicationData).length > 0)) {
+                saveDataToStorage();
+            }
+        }, state.settings.autoSaveInterval * 1000);
+    </script>
+</body>
+</html>
