@@ -3343,7 +3343,8 @@ function addFromAppDetailModal() {
                         }
                         state.isLoadingMap = false;
                         state.mapLoadingProgress = 100;
-                        render();
+                        const loadingBar = document.querySelector('#mapContainer').parentElement.querySelector('.bg-blue-100');
+                        if (loadingBar) loadingBar.remove();
                     }, 300);
                 }
             });
