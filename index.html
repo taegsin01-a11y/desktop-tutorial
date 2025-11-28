@@ -3286,7 +3286,12 @@ function addFromAppDetailModal() {
         return;
     }
 
-    // Kakao Maps 로드
+    if (typeof kakao === 'undefined' || typeof kakao.maps === 'undefined') {
+        console.error('카카오맵 SDK가 로드되지 않았습니다');
+        setTimeout(() => initMap(locations), 500);
+        return;
+    }
+
     kakao.maps.load(function() {
         const mapOption = {
             center: new kakao.maps.LatLng(35.1796, 129.0756),
@@ -3300,49 +3305,51 @@ function addFromAppDetailModal() {
         let totalCount = locations.length;
 
         locations.forEach((location) => {
-                const address = location['새주소'];
-                if (!address) {
-                    processedCount++;
-                    return;
+            const address = location['새주소'];
+            if (!address) {
+                processedCount++;
+                return;
+            }
+
+            geocoder.addressSearch(address, function(result, status) {
+                processedCount++;
+                state.mapLoadingProgress = Math.floor((processedCount / totalCount) * 100);
+                
+                if (status === kakao.maps.services.Status.OK && result[0]) {
+                    const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+                    bounds.extend(coords);
+
+                    const marker = new kakao.maps.Marker({
+                        position: coords,
+                        map: map
+                    });
+
+                    const infowindow = new kakao.maps.InfoWindow({
+                        content: '<div style="padding:10px;font-size:12px;"><strong>' + location['시설명'] + '</strong><br/>' + location['새주소'] + '<br/>' + (location['전화번호'] || '') + '</div>'
+                    });
+
+                    kakao.maps.event.addListener(marker, 'mouseover', function() {
+                        infowindow.open(map, marker);
+                    });
+                    kakao.maps.event.addListener(marker, 'mouseout', function() {
+                        infowindow.close();
+                    });
                 }
 
-                geocoder.addressSearch(address, function(result, status) {
-                    processedCount++;
-                     state.mapLoadingProgress = Math.floor((processedCount / totalCount) * 100);
-                    render();
-                    if (status === kakao.maps.services.Status.OK && result[0]) {
-                        const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
-                        bounds.extend(coords);
-
-                        const marker = new kakao.maps.Marker({
-                            position: coords,
-                            map: map
-                        });
-
-                        const infowindow = new kakao.maps.InfoWindow({
-                            content: `<div style="padding:10px;font-size:12px;"><strong>${location['시설명']}</strong><br/>${location['새주소']}<br/>${location['전화번호'] || ''}</div>`
-                        });
-
-                        marker.addListener('mouseover', () => infowindow.open(map, marker));
-                        marker.addListener('mouseout', () => infowindow.close());
-                    }
-
-                    // 모든 지도코딩 완료 후 지도 범위 조정
-                   if (processedCount === totalCount) {
-                    setTimeout(() => {
-                        if (bounds.isEmpty() === false) {
+                if (processedCount === totalCount) {
+                    setTimeout(function() {
+                        if (!bounds.isEmpty()) {
                             map.setBounds(bounds);
                         }
                         state.isLoadingMap = false;
                         state.mapLoadingProgress = 100;
                         render();
-                    }, 200);
+                    }, 300);
                 }
             });
         });
     });
 }
-
 
 
         // ======================== 이벤트 리스너 ========================
@@ -4358,13 +4365,12 @@ if (confirmAppDeleteBtn) {
                        state.mapData = selectedData;
                        state.showMapModal = true;
                        state.isLoadingMap = true;
+                       state.mapLoadingProgress = 0;
                        render();
 
                        setTimeout(() => {
                            initMap(selectedData);
-                           state.isLoadingMap = false;
-                           render();
-                       }, 1500);
+                       }, 500);
                     });
                 }
                 // 상세보기/추가 모달
