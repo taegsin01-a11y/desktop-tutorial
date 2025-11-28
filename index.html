@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- 이 부분 위에 추가 -->
-    <script async defer src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=c8f5719a2be48f3875087006ce782934"></script>
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=c8f5719a2be48f3875087006ce782934&libraries=services&autoload=false"></script>
    
     <style>
         .scroll-x-auto {
@@ -1918,16 +1918,16 @@ function addFromAppDetailModal() {
         }
 
         function renderApplicationTab() {
-            const mainData = Object.values(state.data).flat(); 
-            const currentAppData = state.applicationData[state.targetYear] || [];
-            currentAppData.forEach(appRow => {
-             if (!appRow['기준일'] || appRow['기준일'] === '') {
-            const mainRow = mainData.find(m => m['시설번호'] === appRow['시설번호']);
-              if (mainRow && mainRow['기준일']) {
-                appRow['기준일'] = mainRow['기준일'];
-            }
-        }
-    });
+    const mainData = Object.values(state.data).flat(); 
+    const currentAppData = (state.applicationData[state.targetYear] || []).filter(row => row !== null && row !== undefined);
+    currentAppData.forEach(appRow => {
+     if (appRow && (!appRow['기준일'] || appRow['기준일'] === '')) {
+    const mainRow = mainData.find(m => m && m['시설번호'] === appRow['시설번호']);
+      if (mainRow && mainRow['기준일']) {
+        appRow['기준일'] = mainRow['기준일'];
+    }
+}
+});
             
            
     
@@ -3286,23 +3286,20 @@ function addFromAppDetailModal() {
         return;
     }
 
-    // Kakao Maps 완전 로드 대기
-    const checkMapLoaded = setInterval(() => {
-        if (window.kakao && kakao.maps && kakao.maps.services) {
-            clearInterval(checkMapLoaded);
-            
-            const mapOption = {
-                center: new kakao.maps.LatLng(37.4979, 127.0276),
-                level: 5
-            };
+    // Kakao Maps 로드
+    kakao.maps.load(function() {
+        const mapOption = {
+            center: new kakao.maps.LatLng(35.1796, 129.0756),
+            level: 7
+        };
 
-            const map = new kakao.maps.Map(mapContainer, mapOption);
-            const geocoder = new kakao.maps.services.Geocoder();
-            const bounds = new kakao.maps.LatLngBounds();
-            let processedCount = 0;
-            let totalCount = locations.length;
+        const map = new kakao.maps.Map(mapContainer, mapOption);
+        const geocoder = new kakao.maps.services.Geocoder();
+        const bounds = new kakao.maps.LatLngBounds();
+        let processedCount = 0;
+        let totalCount = locations.length;
 
-            locations.forEach((location) => {
+        locations.forEach((location) => {
                 const address = location['새주소'];
                 if (!address) {
                     processedCount++;
@@ -3331,26 +3328,21 @@ function addFromAppDetailModal() {
                     }
 
                     // 모든 지도코딩 완료 후 지도 범위 조정
-                   // 모든 지오코딩 완료 후 지도 범위 조정
-                    if (processedCount === totalCount) {
-                        setTimeout(() => {
-                            if (bounds.isEmpty() === false) {
-                                map.setBounds(bounds);
-                            }
-                            // 로딩 완료 처리
-                            state.isLoadingMap = false;
-                            state.mapLoadingProgress = 100;
-                            render();
-                        }, 200);
-                    }
-                });
+                   if (processedCount === totalCount) {
+                    setTimeout(() => {
+                        if (bounds.isEmpty() === false) {
+                            map.setBounds(bounds);
+                        }
+                        state.isLoadingMap = false;
+                        state.mapLoadingProgress = 100;
+                        render();
+                    }, 200);
+                }
             });
-        }
-    }, 100);
-
-    // 최대 5초 대기
-    setTimeout(() => clearInterval(checkMapLoaded), 5000);
+        });
+    });
 }
+
 
 
         // ======================== 이벤트 리스너 ========================
