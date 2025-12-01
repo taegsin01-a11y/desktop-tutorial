@@ -2671,6 +2671,22 @@ ${applicationColumns.map(col => `
                     alert('💾 데이터가 저장되었습니다.');
                 });
 
+                const appDownloadBtn = document.getElementById('appDownloadBtn');
+if (appDownloadBtn) appDownloadBtn.addEventListener('click', () => {
+    const currentAppData = state.applicationData[state.targetYear] || [];
+    const dataToDownload = state.selectedApplicationRows.size > 0
+        ? currentAppData.filter((_, idx) => state.selectedApplicationRows.has(idx))
+        : currentAppData;
+    if (dataToDownload.length === 0) {
+        alert('다운로드할 데이터가 없습니다.');
+        return;
+    }
+    const worksheet = XLSX.utils.json_to_sheet(dataToDownload, { header: applicationColumns });
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '신청접수대장');
+    XLSX.writeFile(workbook, `신청접수대장_${state.targetYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
+});
+                
                 const appEditToggleBtn = document.getElementById('appEditToggleBtn');
                 if (appEditToggleBtn) appEditToggleBtn.addEventListener('click', () => {
                     state.isEditingApplication = !state.isEditingApplication;
@@ -3070,6 +3086,7 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
