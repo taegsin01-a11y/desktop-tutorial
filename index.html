@@ -903,13 +903,16 @@
                 return;
             }
 
-            selectedData.forEach(row => {
-                if (row['신청일'] && row['신청일'] !== '') {
-                    row['필증번호'] = generateCertificateNumber(row['신청일'], state.targetYear);
-                } else {
-                    row['필증번호'] = '';
-                }
-            });
+           selectedData.forEach(row => {
+    if (row['월사용예정량'] && !row['사용량']) {
+        row['사용량'] = row['월사용예정량'];
+    }
+    if (row['신청일'] && row['신청일'] !== '') {
+        row['필증번호'] = generateCertificateNumber(row['신청일'], state.targetYear);
+    } else {
+        row['필증번호'] = '';
+    }
+});
 
             const existingData = state.applicationData[state.targetYear] || [];
             state.applicationData[state.targetYear] = [...selectedData, ...existingData];
@@ -1883,14 +1886,65 @@ ${columns.map(col => `
                 );
             }
 
-            if (state.applicationSearchTerm) {
-                filteredApplicationData = filteredApplicationData.filter(row =>
-                    Object.values(row).some(val =>
-                        String(val).toLowerCase().includes(state.applicationSearchTerm.toLowerCase())
-                    )
-                );
-            }
+            if (state.applicationFilters.inspectionResult) {
+    filteredApplicationData = filteredApplicationData.filter(row =>
+        row['검사결과'] === state.applicationFilters.inspectionResult
+    );
+}
 
+if (state.applicationFilters.receiptLocation) {
+    filteredApplicationData = filteredApplicationData.filter(row =>
+        row['접수처'] === state.applicationFilters.receiptLocation
+    );
+}
+
+if (state.applicationFilters.baseMonth) {
+    filteredApplicationData = filteredApplicationData.filter(row => {
+        const baseDate = row['기준일'];
+        if (!baseDate) return false;
+        const month = parseInt(baseDate.split('-')[1]);
+        return month === parseInt(state.applicationFilters.baseMonth);
+    });
+}
+
+if (state.applicationFilters.applicationDateFrom) {
+    filteredApplicationData = filteredApplicationData.filter(row =>
+        row['신청일'] >= state.applicationFilters.applicationDateFrom
+    );
+}
+
+if (state.applicationFilters.applicationDateTo) {
+    filteredApplicationData = filteredApplicationData.filter(row =>
+        row['신청일'] <= state.applicationFilters.applicationDateTo
+    );
+}
+
+if (state.applicationFilters.inspectionDateFrom) {
+    filteredApplicationData = filteredApplicationData.filter(row =>
+        row['검사일'] >= state.applicationFilters.inspectionDateFrom
+    );
+}
+
+if (state.applicationFilters.inspectionDateTo) {
+    filteredApplicationData = filteredApplicationData.filter(row =>
+        row['검사일'] <= state.applicationFilters.inspectionDateTo
+    );
+}
+
+if (state.applicationFilters.fee) {
+    filteredApplicationData = filteredApplicationData.filter(row =>
+        String(row['수수료']).includes(state.applicationFilters.fee)
+    );
+}
+
+if (state.applicationSearchTerm) {
+    filteredApplicationData = filteredApplicationData.filter(row =>
+        Object.values(row).some(val =>
+            String(val).toLowerCase().includes(state.applicationSearchTerm.toLowerCase())
+        )
+    );
+}
+            
             const totalAppPages = Math.ceil(filteredApplicationData.length / state.itemsPerPage);
             
             const paginatedAppData = filteredApplicationData.slice(
@@ -2789,8 +2843,78 @@ if (appDownloadBtn) appDownloadBtn.addEventListener('click', () => {
                     }
                 });
 
-                const appFilterResetBtn = document.getElementById('appFilterResetBtn');
-                if (appFilterResetBtn) appFilterResetBtn.addEventListener('click', () => {
+                const appRegionFilter = document.getElementById('appRegionFilter');
+if (appRegionFilter) appRegionFilter.addEventListener('change', (e) => {
+    state.applicationFilters.region = e.target.value ? [e.target.value] : [];
+    state.currentApplicationPage = 1;
+    render();
+});
+
+const appInspectorFilter = document.getElementById('appInspectorFilter');
+if (appInspectorFilter) appInspectorFilter.addEventListener('change', (e) => {
+    state.applicationFilters.inspector = e.target.value;
+    state.currentApplicationPage = 1;
+    render();
+});
+
+const appResultFilter = document.getElementById('appResultFilter');
+if (appResultFilter) appResultFilter.addEventListener('change', (e) => {
+    state.applicationFilters.inspectionResult = e.target.value;
+    state.currentApplicationPage = 1;
+    render();
+});
+
+const appReceiptFilter = document.getElementById('appReceiptFilter');
+if (appReceiptFilter) appReceiptFilter.addEventListener('change', (e) => {
+    state.applicationFilters.receiptLocation = e.target.value;
+    state.currentApplicationPage = 1;
+    render();
+});
+
+const appBaseMonthFilter = document.getElementById('appBaseMonthFilter');
+if (appBaseMonthFilter) appBaseMonthFilter.addEventListener('change', (e) => {
+    state.applicationFilters.baseMonth = e.target.value;
+    state.currentApplicationPage = 1;
+    render();
+});
+
+const appDateFrom = document.getElementById('appDateFrom');
+if (appDateFrom) appDateFrom.addEventListener('change', (e) => {
+    state.applicationFilters.applicationDateFrom = e.target.value;
+    state.currentApplicationPage = 1;
+    render();
+});
+
+const appDateTo = document.getElementById('appDateTo');
+if (appDateTo) appDateTo.addEventListener('change', (e) => {
+    state.applicationFilters.applicationDateTo = e.target.value;
+    state.currentApplicationPage = 1;
+    render();
+});
+
+const appInspDateFrom = document.getElementById('appInspDateFrom');
+if (appInspDateFrom) appInspDateFrom.addEventListener('change', (e) => {
+    state.applicationFilters.inspectionDateFrom = e.target.value;
+    state.currentApplicationPage = 1;
+    render();
+});
+
+const appInspDateTo = document.getElementById('appInspDateTo');
+if (appInspDateTo) appInspDateTo.addEventListener('change', (e) => {
+    state.applicationFilters.inspectionDateTo = e.target.value;
+    state.currentApplicationPage = 1;
+    render();
+});
+
+const appFeeFilter = document.getElementById('appFeeFilter');
+if (appFeeFilter) appFeeFilter.addEventListener('change', (e) => {
+    state.applicationFilters.fee = e.target.value;
+    state.currentApplicationPage = 1;
+    render();
+});
+
+const appFilterResetBtn = document.getElementById('appFilterResetBtn');
+if (appFilterResetBtn) appFilterResetBtn.addEventListener('click', () => {
                     state.applicationFilters = { region: [], inspector: '', receiptLocation: '', inspectionResult: '', applicationDateFrom: '', applicationDateTo: '', inspectionDateFrom: '', inspectionDateTo: '', baseMonth: '', fee: '', facilityCert: '', certificateStatus: '', insuranceStatus: '' };
                     state.applicationSearchTerm = '';
                     state.currentApplicationPage = 1;
@@ -3101,6 +3225,7 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
