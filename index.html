@@ -1884,7 +1884,10 @@
                     row['검사원'] === state.applicationFilters.inspector
                 );
             }
-
+            <th class="border px-2 py-2 sticky left-0 bg-blue-600 z-20" style="width: 50px;">
+    <input type="checkbox" id="selectAllRows" ${state.selectedRows.size === state.filteredData.length && state.filteredData.length > 0 ? 'checked' : ''} />
+</th>
+${columns.map(col => `
             if (state.applicationSearchTerm) {
                 filteredApplicationData = filteredApplicationData.filter(row =>
                     Object.values(row).some(val =>
@@ -2696,6 +2699,7 @@ if (appAddRowBtn) appAddRowBtn.addEventListener('click', addApplicationRow);
     </script>
 </body>
 </html>
+
 
 
 
