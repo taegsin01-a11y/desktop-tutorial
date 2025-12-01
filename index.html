@@ -1733,7 +1733,7 @@
             return `
                 <div>
                     <div class="bg-white rounded-lg p-4 mb-4 shadow">
-                        <div class="flex gap-2 mb-4 flex-wrap"
+                        <div class="flex gap-2 mb-4 flex-wrap">
                             <button id="uploadBtn" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">📤 업로드</button>
                             <div class="relative">
                                 <button id="downloadBtn" class="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">📥 다운로드</button>
@@ -1821,10 +1821,11 @@
                                         const actualIdx = (state.currentPage - 1) * state.itemsPerPage + idx;
                                         return `
                                             <tr class="${state.selectedRows.has(actualIdx) ? 'bg-blue-50' : 'hover:bg-gray-50'}">
-                                               <td class="border px-2 py-2 text-center sticky left-0 bg-white z-10" style="width: 50px;">
-    <input type="checkbox" class="row-checkbox" data-idx="${actualIdx}" ${state.selectedRows.has(actualIdx) ? 'checked' : ''} />
-</td>
-${columns.map(col => `
+                                                <td class="border px-2 py-2 text-center sticky left-0 bg-white z-10" style="width: 50px;">
+                                                    <input type="checkbox" class="row-checkbox" data-idx="${actualIdx}" ${state.selectedRows.has(actualIdx) ? 'checked' : ''} />
+                                                </td>
+                                                <td class="border px-2 py-2 text-center sticky left-[50px] bg-white z-10 no-cell" style="width: 60px;" data-idx="${actualIdx}">${actualIdx + 1}</td>
+                                                ${columns.map(col => `
                                                     <td class="border px-3 py-2 text-sm" style="width: ${columnWidths[col]}; max-width: ${columnWidths[col]};">
                                                         ${state.isEditing ? `
                                                             <input type="text" value="${row[col] || ''}" class="table-cell-input cell-edit" data-idx="${actualIdx}" data-col="${col}" />
@@ -1883,10 +1884,7 @@ ${columns.map(col => `
                     row['검사원'] === state.applicationFilters.inspector
                 );
             }
-            <th class="border px-2 py-2 sticky left-0 bg-blue-600 z-20" style="width: 50px;">
-    <input type="checkbox" id="selectAllRows" ${state.selectedRows.size === state.filteredData.length && state.filteredData.length > 0 ? 'checked' : ''} />
-</th>
-${columns.map(col => `
+
             if (state.applicationSearchTerm) {
                 filteredApplicationData = filteredApplicationData.filter(row =>
                     Object.values(row).some(val =>
@@ -1952,7 +1950,11 @@ ${columns.map(col => `
                             <table class="w-full border-collapse text-sm" style="table-layout: fixed; min-width: 2600px;">
                                 <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                     <tr>
-
+                                        <th class="border px-2 py-2" style="width: 50px;">
+                                            <input type="checkbox" id="selectAllAppRows" ${state.selectedApplicationRows.size === filteredApplicationData.length && filteredApplicationData.length > 0 ? 'checked' : ''} />
+                                        </th>
+                                        <th class="border px-2 py-2" style="width: 60px;">No</th>
+                                        ${applicationColumns.map(col => `
                                             <th class="border px-2 py-2" style="width: ${columnWidths[col]};">
                                                 <div class="truncate" title="${col}">${col}</div>
                                             </th>
@@ -2436,44 +2438,44 @@ ${columns.map(col => `
                     render();
                 });
 
-               const appUploadBtn = document.getElementById('appUploadBtn');
-if (appUploadBtn) {
-    const appInput = document.createElement('input');
-    appInput.type = 'file';
-    appInput.accept = '.csv,.xlsx,.xls';
-    appUploadBtn.addEventListener('click', () => appInput.click());
-    appInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        try {
-            state.isLoading = true;
-            state.loadingProgress = 30;
-            render();
-            const fileExt = file.name.split('.').pop().toLowerCase();
-            let parsedData;
-            if (fileExt === 'xlsx' || fileExt === 'xls') {
-                parsedData = await parseExcelFile(file);
-            } else if (fileExt === 'csv') {
-                parsedData = await parseCSVFile(file);
-            }
-            if (!state.applicationData[state.targetYear]) {
-                state.applicationData[state.targetYear] = [];
-            }
-            state.applicationData[state.targetYear] = [...parsedData, ...state.applicationData[state.targetYear]];
-            state.isLoading = false;
-            saveDataToStorage();
-            alert(`✅ ${parsedData.length}개의 데이터가 신청접수대장에 업로드되었습니다.`);
-            render();
-        } catch (error) {
-            state.isLoading = false;
-            alert('파일 처리 오류: ' + error.message);
-            render();
-        }
-    });
-}
+                const appUploadBtn = document.getElementById('appUploadBtn');
+                if (appUploadBtn) {
+                    const appInput = document.createElement('input');
+                    appInput.type = 'file';
+                    appInput.accept = '.csv,.xlsx,.xls';
+                    appUploadBtn.addEventListener('click', () => appInput.click());
+                    appInput.addEventListener('change', async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        try {
+                            state.isLoading = true;
+                            state.loadingProgress = 30;
+                            render();
+                            const fileExt = file.name.split('.').pop().toLowerCase();
+                            let parsedData;
+                            if (fileExt === 'xlsx' || fileExt === 'xls') {
+                                parsedData = await parseExcelFile(file);
+                            } else if (fileExt === 'csv') {
+                                parsedData = await parseCSVFile(file);
+                            }
+                            if (!state.applicationData[state.targetYear]) {
+                                state.applicationData[state.targetYear] = [];
+                            }
+                            state.applicationData[state.targetYear] = [...parsedData, ...state.applicationData[state.targetYear]];
+                            state.isLoading = false;
+                            saveDataToStorage();
+                            alert(`✅ ${parsedData.length}개의 데이터가 신청접수대장에 업로드되었습니다.`);
+                            render();
+                        } catch (error) {
+                            state.isLoading = false;
+                            alert('파일 처리 오류: ' + error.message);
+                            render();
+                        }
+                    });
+                }
 
-const appAddRowBtn = document.getElementById('appAddRowBtn');
-if (appAddRowBtn) appAddRowBtn.addEventListener('click', addApplicationRow);
+                const appAddRowBtn = document.getElementById('appAddRowBtn');
+                if (appAddRowBtn) appAddRowBtn.addEventListener('click', addApplicationRow);
 
                 const appDeleteRowBtn = document.getElementById('appDeleteRowBtn');
                 if (appDeleteRowBtn) appDeleteRowBtn.addEventListener('click', deleteSelectedApplicationRows);
@@ -2694,9 +2696,3 @@ if (appAddRowBtn) appAddRowBtn.addEventListener('click', addApplicationRow);
     </script>
 </body>
 </html>
-
-
-
-
-
-
