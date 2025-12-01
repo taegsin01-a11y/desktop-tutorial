@@ -2643,6 +2643,18 @@ ${applicationColumns.map(col => `
                             if (!state.applicationData[state.targetYear]) {
                                 state.applicationData[state.targetYear] = [];
                             }
+                            if (fileExt === 'xlsx' || fileExt === 'xls') {
+    parsedData = await parseExcelFile(file);
+} else if (fileExt === 'csv') {
+    parsedData = await parseCSVFile(file);
+}
+if (!parsedData || !Array.isArray(parsedData)) {
+    throw new Error('파일을 파싱할 수 없습니다.');
+}
+if (!state.applicationData[state.targetYear]) {
+    state.applicationData[state.targetYear] = [];
+}
+state.applicationData[state.targetYear] = [...parsedData, ...state.applicationData[state.targetYear]];
                             state.applicationData[state.targetYear] = [...parsedData, ...state.applicationData[state.targetYear]];
                             state.isLoading = false;
                             saveDataToStorage();
@@ -3086,6 +3098,7 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
