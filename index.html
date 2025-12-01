@@ -1935,10 +1935,13 @@ ${columns.map(col => `
 </div>
 
                       <div class="grid grid-cols-4 gap-4 mb-4">
-    <div>
-        <label class="block text-sm font-semibold mb-1">행정구역</label>
-        <input type="text" id="appRegionFilter" value="${state.applicationFilters.region.join(', ') || ''}" placeholder="데이터 없음" class="w-full px-3 py-2 border rounded text-sm" readonly />
-    </div>
+   <div>
+    <label class="block text-sm font-semibold mb-1">행정구역</label>
+    <select id="appRegionFilter" class="w-full px-3 py-2 border rounded text-sm">
+        <option value="">전체</option>
+        ${uniqueAppRegions.map(r => `<option value="${r}" ${state.applicationFilters.region.includes(r) ? 'selected' : ''}>${r}</option>`).join('')}
+    </select>
+</div>
     <div>
         <label class="block text-sm font-semibold mb-1">검사원</label>
         <select id="appInspectorFilter" class="w-full px-3 py-2 border rounded text-sm">
@@ -3098,6 +3101,7 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
