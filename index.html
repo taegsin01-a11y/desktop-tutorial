@@ -1624,9 +1624,9 @@
                 return `<div class="bg-white rounded-lg p-6 shadow"><h2 class="text-xl font-bold">매출분석 탭</h2><p class="text-gray-600 mt-2">매출분석 기능은 원본과 동일하게 작동합니다.</p></div>`;
             }
 
-            if (state.activeTab === '경로당') {
-                return `<div class="bg-white rounded-lg p-6 shadow"><h2 class="text-xl font-bold">경로당 탭</h2><p class="text-gray-600 mt-2">경로당 기능은 원본과 동일하게 작동합니다.</p></div>`;
-            }
+           if (state.activeTab === '경로당') {
+    return renderPathwayTab();
+}
 
             if (state.activeTab === '자료실') {
                 return `<div class="bg-white rounded-lg p-6 shadow"><h2 class="text-xl font-bold">자료실 탭</h2><p class="text-gray-600 mt-2">자료실 기능은 원본과 동일하게 작동합니다.</p></div>`;
@@ -1806,10 +1806,9 @@
                                 <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                     <tr>
                                         <th class="border px-2 py-2 sticky left-0 bg-blue-600 z-20" style="width: 50px;">
-                                            <input type="checkbox" id="selectAllRows" ${state.selectedRows.size === state.filteredData.length && state.filteredData.length > 0 ? 'checked' : ''} />
-                                        </th>
-                                        <th class="border px-2 py-2 sticky left-[50px] bg-blue-600 z-20" style="width: 60px;">No</th>
-                                        ${columns.map(col => `
+    <input type="checkbox" id="selectAllRows" ${state.selectedRows.size === state.filteredData.length && state.filteredData.length > 0 ? 'checked' : ''} />
+</th>
+${columns.map(col => `
                                             <th class="border px-3 py-2 text-sm" style="width: ${columnWidths[col]};">
                                                 <div class="truncate" title="${col}">${col}</div>
                                             </th>
@@ -1821,11 +1820,10 @@
                                         const actualIdx = (state.currentPage - 1) * state.itemsPerPage + idx;
                                         return `
                                             <tr class="${state.selectedRows.has(actualIdx) ? 'bg-blue-50' : 'hover:bg-gray-50'}">
-                                                <td class="border px-2 py-2 text-center sticky left-0 bg-white z-10" style="width: 50px;">
-                                                    <input type="checkbox" class="row-checkbox" data-idx="${actualIdx}" ${state.selectedRows.has(actualIdx) ? 'checked' : ''} />
-                                                </td>
-                                                <td class="border px-2 py-2 text-center sticky left-[50px] bg-white z-10 no-cell" style="width: 60px;" data-idx="${actualIdx}">${actualIdx + 1}</td>
-                                                ${columns.map(col => `
+                                               <td class="border px-2 py-2 text-center sticky left-0 bg-white z-10" style="width: 50px;">
+    <input type="checkbox" class="row-checkbox" data-idx="${actualIdx}" ${state.selectedRows.has(actualIdx) ? 'checked' : ''} />
+</td>
+${columns.map(col => `
                                                     <td class="border px-3 py-2 text-sm" style="width: ${columnWidths[col]}; max-width: ${columnWidths[col]};">
                                                         ${state.isEditing ? `
                                                             <input type="text" value="${row[col] || ''}" class="table-cell-input cell-edit" data-idx="${actualIdx}" data-col="${col}" />
@@ -1950,11 +1948,10 @@
                             <table class="w-full border-collapse text-sm" style="table-layout: fixed; min-width: 2600px;">
                                 <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                     <tr>
-                                        <th class="border px-2 py-2" style="width: 50px;">
-                                            <input type="checkbox" id="selectAllAppRows" ${state.selectedApplicationRows.size === filteredApplicationData.length && filteredApplicationData.length > 0 ? 'checked' : ''} />
-                                        </th>
-                                        <th class="border px-2 py-2" style="width: 60px;">No</th>
-                                        ${applicationColumns.map(col => `
+                                       <th class="border px-2 py-2" style="width: 50px;">
+    <input type="checkbox" id="selectAllAppRows" ${state.selectedApplicationRows.size === filteredApplicationData.length && filteredApplicationData.length > 0 ? 'checked' : ''} />
+</th>
+${applicationColumns.map(col => `
                                             <th class="border px-2 py-2" style="width: ${columnWidths[col]};">
                                                 <div class="truncate" title="${col}">${col}</div>
                                             </th>
@@ -1967,10 +1964,9 @@
                                         return `
                                             <tr class="${state.selectedApplicationRows.has(actualIdx) ? 'bg-blue-50' : 'hover:bg-gray-50'}">
                                                 <td class="border px-2 py-1 text-center" style="width: 50px;">
-                                                    <input type="checkbox" class="app-row-checkbox" data-idx="${actualIdx}" ${state.selectedApplicationRows.has(actualIdx) ? 'checked' : ''} />
-                                                </td>
-                                                <td class="border px-2 py-1 text-center no-cell app-no-cell" style="width: 60px;" data-idx="${actualIdx}">${actualIdx + 1}</td>
-                                                ${applicationColumns.map(col => `
+    <input type="checkbox" class="app-row-checkbox" data-idx="${actualIdx}" ${state.selectedApplicationRows.has(actualIdx) ? 'checked' : ''} />
+</td>
+${applicationColumns.map(col => `
                                                     <td class="border px-2 py-1 text-sm" style="width: ${columnWidths[col]};">
                                                         ${state.isEditingApplication ? `
                                                             ${col.includes('일') ? `
@@ -2038,6 +2034,153 @@
             `;
         }
 
+        function renderPathwayTab() {
+    const currentPathwayData = state.pathwayData[state.selectedYear] || [];
+    
+    const uniquePathwayRegions = [...new Set(currentPathwayData.map(row => row['행정구역']).filter(Boolean))].sort();
+    
+    let filteredPathwayData = [...currentPathwayData];
+    
+    if (state.pathway.filters.region) {
+        filteredPathwayData = filteredPathwayData.filter(row => row['행정구역'] === state.pathway.filters.region);
+    }
+    
+    if (state.pathway.searchTerm) {
+        filteredPathwayData = filteredPathwayData.filter(row =>
+            Object.values(row).some(val =>
+                String(val).toLowerCase().includes(state.pathway.searchTerm.toLowerCase())
+            )
+        );
+    }
+    
+    const totalPathwayPages = Math.ceil(filteredPathwayData.length / state.itemsPerPage);
+    const paginatedPathwayData = filteredPathwayData.slice(
+        (state.pathway.currentPage - 1) * state.itemsPerPage,
+        state.pathway.currentPage * state.itemsPerPage
+    );
+
+    return `
+        <div>
+            <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-4">
+                <h2 class="text-xl font-bold text-yellow-800 flex items-center gap-2">
+                    <span>🏠</span> 경로당 점검: ${state.selectedYear}년
+                </h2>
+            </div>
+            
+            <div class="bg-white rounded-lg p-4 mb-4 shadow">
+                <div class="flex gap-2 mb-4 flex-wrap">
+                    <button id="pathwayUploadBtn" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">📤 업로드 (Excel/CSV)</button>
+                    <button id="pathwayDownloadBtn" class="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">📥 다운로드</button>
+                    <button id="pathwayDeleteBtn" class="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">🗑️ 삭제</button>
+                    <button id="pathwaySaveBtn" class="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">💾 저장</button>
+                    <button id="pathwayEditToggleBtn" class="flex items-center gap-2 bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">✏️ ${state.pathway.isEditing ? '완료' : '편집'}</button>
+                    <button id="pathwayAddRowBtn" class="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">➕ 행 추가</button>
+                    <button id="pathwayMapBtn" class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">🗺️ MAP</button>
+                </div>
+                
+                <div class="flex gap-4 items-end">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">행정구역</label>
+                        <select id="pathwayRegionFilter" class="px-3 py-2 border rounded">
+                            <option value="">전체</option>
+                            ${pathwayOptions.regions.map(r => `<option value="${r}" ${state.pathway.filters.region === r ? 'selected' : ''}>${r}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold mb-1">검색</label>
+                        <input type="text" id="pathwaySearchInput" value="${state.pathway.searchTerm}" placeholder="검색어 입력..." class="w-full px-3 py-2 border rounded" />
+                    </div>
+                    <button id="pathwaySearchBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">🔍 조회</button>
+                    <button id="pathwayResetBtn" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">🔄 초기화</button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="overflow-x-auto" style="max-height: 600px;">
+                    <table class="w-full border-collapse text-sm" style="table-layout: fixed; min-width: 2000px;">
+                        <thead class="bg-blue-600 text-white sticky top-0 z-10">
+                            <tr>
+                                <th class="border px-2 py-2" style="width: 50px;">
+                                    <input type="checkbox" id="selectAllPathwayRows" ${state.pathway.selectedRows.size === filteredPathwayData.length && filteredPathwayData.length > 0 ? 'checked' : ''} />
+                                </th>
+                                ${pathwayColumns.map(col => `
+                                    <th class="border px-2 py-2" style="width: ${col === '새주소' ? '200px' : col === '시설명' ? '150px' : '100px'};">
+                                        <div class="truncate" title="${col}">${col}</div>
+                                    </th>
+                                `).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${paginatedPathwayData.map((row, idx) => {
+                                const actualIdx = (state.pathway.currentPage - 1) * state.itemsPerPage + idx;
+                                return `
+                                    <tr class="${state.pathway.selectedRows.has(actualIdx) ? 'bg-blue-50' : 'hover:bg-gray-50'}">
+                                        <td class="border px-2 py-1 text-center" style="width: 50px;">
+                                            <input type="checkbox" class="pathway-row-checkbox" data-idx="${actualIdx}" ${state.pathway.selectedRows.has(actualIdx) ? 'checked' : ''} />
+                                        </td>
+                                        ${pathwayColumns.map(col => `
+                                            <td class="border px-2 py-1 text-sm">
+                                                ${state.pathway.isEditing ? `
+                                                    ${col === '사용가스' ? `
+                                                        <select class="table-cell-input pathway-cell-edit" data-idx="${actualIdx}" data-col="${col}">
+                                                            <option value="">선택</option>
+                                                            ${pathwayOptions.gas.map(g => `<option value="${g}" ${g === row[col] ? 'selected' : ''}>${g}</option>`).join('')}
+                                                        </select>
+                                                    ` : col === '차단기' || col === '타이머' || col === 'CO경보기' ? `
+                                                        <select class="table-cell-input pathway-cell-edit" data-idx="${actualIdx}" data-col="${col}">
+                                                            <option value="">선택</option>
+                                                            ${pathwayOptions.device.map(d => `<option value="${d}" ${d === row[col] ? 'selected' : ''}>${d}</option>`).join('')}
+                                                        </select>
+                                                    ` : col === '누설' ? `
+                                                        <select class="table-cell-input pathway-cell-edit" data-idx="${actualIdx}" data-col="${col}">
+                                                            <option value="">선택</option>
+                                                            ${pathwayOptions.leak.map(l => `<option value="${l}" ${l === row[col] ? 'selected' : ''}>${l}</option>`).join('')}
+                                                        </select>
+                                                    ` : col === '점검자' ? `
+                                                        <select class="table-cell-input pathway-cell-edit" data-idx="${actualIdx}" data-col="${col}">
+                                                            <option value="">선택</option>
+                                                            ${pathwayOptions.inspectors.map(i => `<option value="${i}" ${i === row[col] ? 'selected' : ''}>${i}</option>`).join('')}
+                                                        </select>
+                                                    ` : col === '점검일' ? `
+                                                        <input type="date" value="${row[col] || ''}" class="table-cell-input pathway-cell-edit" data-idx="${actualIdx}" data-col="${col}" />
+                                                    ` : `
+                                                        <input type="text" value="${row[col] || ''}" class="table-cell-input pathway-cell-edit" data-idx="${actualIdx}" data-col="${col}" />
+                                                    `}
+                                                ` : `
+                                                    <div class="truncate" title="${row[col] || '-'}">${row[col] || '-'}</div>
+                                                `}
+                                            </td>
+                                        `).join('')}
+                                    </tr>
+                                `;
+                            }).join('')}
+                            ${paginatedPathwayData.length === 0 ? `
+                                <tr>
+                                    <td colspan="${pathwayColumns.length + 1}" class="text-center py-8 text-gray-500">
+                                        <div class="text-4xl mb-2">🏠</div>
+                                        <div>데이터가 없습니다</div>
+                                    </td>
+                                </tr>
+                            ` : ''}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="flex items-center justify-between px-4 py-3 border-t bg-gray-50">
+                    <div class="text-sm text-gray-600">
+                        전체 ${filteredPathwayData.length}건
+                        ${state.pathway.selectedRows.size > 0 ? ` (${state.pathway.selectedRows.size}건 선택됨)` : ''}
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="pathwayPrevPageBtn" ${state.pathway.currentPage === 1 ? 'disabled' : ''} class="p-2 border rounded hover:bg-gray-100 disabled:opacity-50">◀</button>
+                        <span class="px-4 py-2">${state.pathway.currentPage} / ${totalPathwayPages || 1}</span>
+                        <button id="pathwayNextPageBtn" ${state.pathway.currentPage === totalPathwayPages || totalPathwayPages === 0 ? 'disabled' : ''} class="p-2 border rounded hover:bg-gray-100 disabled:opacity-50">▶</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
         function renderLoadingModal() {
             return `
                 <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -2368,18 +2511,7 @@
                     });
                 });
 
-                // ★★★ NO 클릭 시 행 선택 (통합 탭) ★★★
-                document.querySelectorAll('.no-cell:not(.app-no-cell)').forEach(cell => {
-                    cell.addEventListener('click', (e) => {
-                        const idx = parseInt(e.target.dataset.idx);
-                        if (state.selectedRows.has(idx)) {
-                            state.selectedRows.delete(idx);
-                        } else {
-                            state.selectedRows.add(idx);
-                        }
-                        render();
-                    });
-                });
+               
 
                 // 셀 편집
                 document.querySelectorAll('.cell-edit').forEach(input => {
@@ -2517,19 +2649,7 @@
                     });
                 });
 
-                // ★★★ NO 클릭 시 행 선택 (신청접수대장 탭) ★★★
-                document.querySelectorAll('.app-no-cell').forEach(cell => {
-                    cell.addEventListener('click', (e) => {
-                        const idx = parseInt(e.target.dataset.idx);
-                        if (state.selectedApplicationRows.has(idx)) {
-                            state.selectedApplicationRows.delete(idx);
-                        } else {
-                            state.selectedApplicationRows.add(idx);
-                        }
-                        render();
-                    });
-                });
-
+               
                 document.querySelectorAll('.app-cell-edit').forEach(input => {
                     input.addEventListener('change', (e) => {
                         const idx = parseInt(e.target.dataset.idx);
@@ -2650,6 +2770,192 @@
 
                 const appDetailAddBtn = document.getElementById('appDetailAddBtn');
                 if (appDetailAddBtn) appDetailAddBtn.addEventListener('click', addFromAppDetailModal);
+
+                // 경로당 탭 이벤트
+const pathwayUploadBtn = document.getElementById('pathwayUploadBtn');
+if (pathwayUploadBtn) {
+    const pathwayInput = document.createElement('input');
+    pathwayInput.type = 'file';
+    pathwayInput.accept = '.csv,.xlsx,.xls';
+    pathwayUploadBtn.addEventListener('click', () => pathwayInput.click());
+    pathwayInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            state.isLoading = true;
+            state.loadingProgress = 30;
+            render();
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            let parsedData;
+            if (fileExt === 'xlsx' || fileExt === 'xls') {
+                parsedData = await parseExcelFile(file);
+            } else if (fileExt === 'csv') {
+                parsedData = await parseCSVFile(file);
+            }
+            if (!state.pathwayData[state.selectedYear]) {
+                state.pathwayData[state.selectedYear] = [];
+            }
+            state.pathwayData[state.selectedYear] = [...parsedData, ...state.pathwayData[state.selectedYear]];
+            state.isLoading = false;
+            saveDataToStorage();
+            alert(`✅ ${parsedData.length}개의 데이터가 경로당에 업로드되었습니다.`);
+            render();
+        } catch (error) {
+            state.isLoading = false;
+            alert('파일 처리 오류: ' + error.message);
+            render();
+        }
+    });
+}
+
+const pathwayDownloadBtn = document.getElementById('pathwayDownloadBtn');
+if (pathwayDownloadBtn) pathwayDownloadBtn.addEventListener('click', () => {
+    const dataToDownload = state.pathway.selectedRows.size > 0
+        ? (state.pathwayData[state.selectedYear] || []).filter((_, idx) => state.pathway.selectedRows.has(idx))
+        : (state.pathwayData[state.selectedYear] || []);
+    if (dataToDownload.length === 0) {
+        alert('다운로드할 데이터가 없습니다.');
+        return;
+    }
+    const worksheet = XLSX.utils.json_to_sheet(dataToDownload, { header: pathwayColumns });
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '경로당');
+    XLSX.writeFile(workbook, `경로당_${state.selectedYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
+});
+
+const pathwayDeleteBtn = document.getElementById('pathwayDeleteBtn');
+if (pathwayDeleteBtn) pathwayDeleteBtn.addEventListener('click', () => {
+    if (state.pathway.selectedRows.size === 0) {
+        alert('삭제할 행을 선택해주세요.');
+        return;
+    }
+    if (confirm(`${state.pathway.selectedRows.size}개 항목을 삭제하시겠습니까?`)) {
+        const currentData = state.pathwayData[state.selectedYear] || [];
+        state.pathwayData[state.selectedYear] = currentData.filter((_, idx) => !state.pathway.selectedRows.has(idx));
+        state.pathway.selectedRows = new Set();
+        saveDataToStorage();
+        alert('삭제되었습니다.');
+        render();
+    }
+});
+
+const pathwaySaveBtn = document.getElementById('pathwaySaveBtn');
+if (pathwaySaveBtn) pathwaySaveBtn.addEventListener('click', () => {
+    saveDataToStorage();
+    alert('💾 데이터가 저장되었습니다.');
+});
+
+const pathwayEditToggleBtn = document.getElementById('pathwayEditToggleBtn');
+if (pathwayEditToggleBtn) pathwayEditToggleBtn.addEventListener('click', () => {
+    state.pathway.isEditing = !state.pathway.isEditing;
+    render();
+});
+
+const pathwayAddRowBtn = document.getElementById('pathwayAddRowBtn');
+if (pathwayAddRowBtn) pathwayAddRowBtn.addEventListener('click', () => {
+    const newRow = {};
+    pathwayColumns.forEach(col => newRow[col] = '');
+    if (!state.pathwayData[state.selectedYear]) {
+        state.pathwayData[state.selectedYear] = [];
+    }
+    state.pathwayData[state.selectedYear] = [newRow, ...state.pathwayData[state.selectedYear]];
+    saveDataToStorage();
+    render();
+});
+
+const pathwayMapBtn = document.getElementById('pathwayMapBtn');
+if (pathwayMapBtn) pathwayMapBtn.addEventListener('click', () => {
+    const selectedData = state.pathway.selectedRows.size > 0
+        ? (state.pathwayData[state.selectedYear] || []).filter((_, idx) => state.pathway.selectedRows.has(idx))
+        : [];
+    if (selectedData.length === 0) {
+        alert('지도에 표시할 행을 선택해주세요.');
+        return;
+    }
+    state.mapData = selectedData;
+    state.showMapModal = true;
+    state.isLoadingMap = true;
+    state.mapLoadingProgress = 0;
+    render();
+    setTimeout(() => initMap(selectedData), 100);
+});
+
+const pathwayRegionFilter = document.getElementById('pathwayRegionFilter');
+if (pathwayRegionFilter) pathwayRegionFilter.addEventListener('change', (e) => {
+    state.pathway.filters.region = e.target.value;
+    state.pathway.currentPage = 1;
+    render();
+});
+
+const pathwaySearchBtn = document.getElementById('pathwaySearchBtn');
+if (pathwaySearchBtn) pathwaySearchBtn.addEventListener('click', () => {
+    const searchInput = document.getElementById('pathwaySearchInput');
+    if (searchInput) state.pathway.searchTerm = searchInput.value;
+    state.pathway.currentPage = 1;
+    render();
+});
+
+const pathwaySearchInput = document.getElementById('pathwaySearchInput');
+if (pathwaySearchInput) pathwaySearchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        state.pathway.searchTerm = e.target.value;
+        state.pathway.currentPage = 1;
+        render();
+    }
+});
+
+const pathwayResetBtn = document.getElementById('pathwayResetBtn');
+if (pathwayResetBtn) pathwayResetBtn.addEventListener('click', () => {
+    state.pathway.filters.region = '';
+    state.pathway.searchTerm = '';
+    state.pathway.currentPage = 1;
+    render();
+});
+
+const selectAllPathwayRows = document.getElementById('selectAllPathwayRows');
+if (selectAllPathwayRows) selectAllPathwayRows.addEventListener('change', (e) => {
+    const currentData = state.pathwayData[state.selectedYear] || [];
+    if (e.target.checked) {
+        state.pathway.selectedRows = new Set(currentData.map((_, i) => i));
+    } else {
+        state.pathway.selectedRows = new Set();
+    }
+    render();
+});
+
+document.querySelectorAll('.pathway-row-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', (e) => {
+        const idx = parseInt(e.target.dataset.idx);
+        if (e.target.checked) {
+            state.pathway.selectedRows.add(idx);
+        } else {
+            state.pathway.selectedRows.delete(idx);
+        }
+    });
+});
+
+document.querySelectorAll('.pathway-cell-edit').forEach(input => {
+    input.addEventListener('change', (e) => {
+        const idx = parseInt(e.target.dataset.idx);
+        const col = e.target.dataset.col;
+        state.pathwayData[state.selectedYear][idx][col] = e.target.value;
+        saveDataToStorage();
+    });
+});
+
+const pathwayPrevPageBtn = document.getElementById('pathwayPrevPageBtn');
+if (pathwayPrevPageBtn) pathwayPrevPageBtn.addEventListener('click', () => {
+    state.pathway.currentPage = Math.max(1, state.pathway.currentPage - 1);
+    render();
+});
+
+const pathwayNextPageBtn = document.getElementById('pathwayNextPageBtn');
+if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
+    const currentData = state.pathwayData[state.selectedYear] || [];
+    const totalPages = Math.ceil(currentData.length / state.itemsPerPage);
+    state.pathway.currentPage = Math.min(totalPages, state.pathway.currentPage + 1);
+    render();
+});
 
                 // 지도 모달
                 const mapCloseBtn = document.getElementById('mapCloseBtn');
