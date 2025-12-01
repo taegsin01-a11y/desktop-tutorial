@@ -1821,11 +1821,10 @@
                                         const actualIdx = (state.currentPage - 1) * state.itemsPerPage + idx;
                                         return `
                                             <tr class="${state.selectedRows.has(actualIdx) ? 'bg-blue-50' : 'hover:bg-gray-50'}">
-                                                <td class="border px-2 py-2 text-center sticky left-0 bg-white z-10" style="width: 50px;">
-                                                    <input type="checkbox" class="row-checkbox" data-idx="${actualIdx}" ${state.selectedRows.has(actualIdx) ? 'checked' : ''} />
-                                                </td>
-                                                <td class="border px-2 py-2 text-center sticky left-[50px] bg-white z-10 no-cell" style="width: 60px;" data-idx="${actualIdx}">${actualIdx + 1}</td>
-                                                ${columns.map(col => `
+                                               <td class="border px-2 py-2 text-center sticky left-0 bg-white z-10" style="width: 50px;">
+    <input type="checkbox" class="row-checkbox" data-idx="${actualIdx}" ${state.selectedRows.has(actualIdx) ? 'checked' : ''} />
+</td>
+${columns.map(col => `
                                                     <td class="border px-3 py-2 text-sm" style="width: ${columnWidths[col]}; max-width: ${columnWidths[col]};">
                                                         ${state.isEditing ? `
                                                             <input type="text" value="${row[col] || ''}" class="table-cell-input cell-edit" data-idx="${actualIdx}" data-col="${col}" />
@@ -2699,6 +2698,7 @@ if (appAddRowBtn) appAddRowBtn.addEventListener('click', addApplicationRow);
     </script>
 </body>
 </html>
+
 
 
 
