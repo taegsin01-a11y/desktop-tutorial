@@ -1922,26 +1922,75 @@ ${columns.map(col => `
                         </div>
                         
                         <div class="flex gap-2 mb-4 flex-wrap">
-                            <button id="appAddRowBtn" class="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700">행 추가</button>
-                            <button id="appUploadBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">📤 업로드</button>
-                            <button id="appDeleteRowBtn" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">🗑️ 삭제</button>
-                            <button id="appEditToggleBtn" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">${state.isEditingApplication ? '편집완료' : '편집'}</button>
-                            <button id="appSaveBtn" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">저장</button>
-                            <button id="appCertBtn" class="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700">✨ 필증번호 재생성</button>
-                            <button id="cutBtn" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">📅 내년으로</button>
-                            <button id="cancelBtn" class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">취소</button>
-                            <button id="appMapBtn" class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800">🗺️ MAP</button>
-                            <button id="appDetailBtn" class="px-4 py-2 bg-pink-600 text-white rounded hover:bg-pink-700">👁️ 상세보기/추가</button>
-                        </div>
+    <button id="appUploadBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">📤 업로드</button>
+    <button id="appAddRowBtn" class="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700">행 추가</button>
+    <button id="appDeleteRowBtn" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">🗑️ 행 삭제</button>
+    <button id="appEditToggleBtn" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">${state.isEditingApplication ? '편집완료' : '편집'}</button>
+    <button id="appSaveBtn" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">저장</button>
+    <button id="appDownloadBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">📥 다운로드</button>
+    <button id="appCertBtn" class="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700">✨ 필증번호 재생성</button>
+    <button id="appMapBtn" class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800">🗺️ MAP</button>
+    <button id="cutBtn" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">✂️ 잘라내기</button>
+    <button id="cancelBtn" class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">취소</button>
+</div>
 
-                        <div class="flex gap-2 items-end">
-                            <div class="flex-1">
-                                <label class="block text-sm font-semibold mb-2">검색</label>
-                                <input type="text" id="appSearchInput" value="${state.applicationSearchTerm}" placeholder="검색어 입력..." class="w-full px-3 py-2 border rounded text-sm" />
-                            </div>
-                            <button id="appSearchBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">🔍 검색</button>
-                            <button id="appFilterResetBtn" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm">🔄 초기화</button>
-                        </div>
+                      <div class="grid grid-cols-4 gap-4 mb-4">
+    <div>
+        <label class="block text-sm font-semibold mb-1">행정구역</label>
+        <input type="text" id="appRegionFilter" value="${state.applicationFilters.region.join(', ') || ''}" placeholder="데이터 없음" class="w-full px-3 py-2 border rounded text-sm" readonly />
+    </div>
+    <div>
+        <label class="block text-sm font-semibold mb-1">검사원</label>
+        <select id="appInspectorFilter" class="w-full px-3 py-2 border rounded text-sm">
+            <option value="">선택</option>
+            ${state.inspectors.map(i => `<option value="${i}" ${state.applicationFilters.inspector === i ? 'selected' : ''}>${i}</option>`).join('')}
+        </select>
+    </div>
+    <div>
+        <label class="block text-sm font-semibold mb-1">검사결과</label>
+        <select id="appResultFilter" class="w-full px-3 py-2 border rounded text-sm">
+            <option value="">선택</option>
+            ${state.inspectionResults.map(r => `<option value="${r}" ${state.applicationFilters.inspectionResult === r ? 'selected' : ''}>${r}</option>`).join('')}
+        </select>
+    </div>
+    <div>
+        <label class="block text-sm font-semibold mb-1">접수처</label>
+        <select id="appReceiptFilter" class="w-full px-3 py-2 border rounded text-sm">
+            <option value="">선택</option>
+            ${state.receiptLocations.map(l => `<option value="${l}" ${state.applicationFilters.receiptLocation === l ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+    </div>
+</div>
+<div class="grid grid-cols-4 gap-4 mb-4">
+    <div>
+        <label class="block text-sm font-semibold mb-1">신청일</label>
+        <div class="flex gap-1">
+            <input type="date" id="appDateFrom" value="${state.applicationFilters.applicationDateFrom}" class="flex-1 px-2 py-2 border rounded text-sm" />
+            <input type="date" id="appDateTo" value="${state.applicationFilters.applicationDateTo}" class="flex-1 px-2 py-2 border rounded text-sm" />
+        </div>
+    </div>
+    <div>
+        <label class="block text-sm font-semibold mb-1">검사일</label>
+        <div class="flex gap-1">
+            <input type="date" id="appInspDateFrom" value="${state.applicationFilters.inspectionDateFrom}" class="flex-1 px-2 py-2 border rounded text-sm" />
+            <input type="date" id="appInspDateTo" value="${state.applicationFilters.inspectionDateTo}" class="flex-1 px-2 py-2 border rounded text-sm" />
+        </div>
+    </div>
+    <div>
+        <label class="block text-sm font-semibold mb-1">기준월</label>
+        <select id="appBaseMonthFilter" class="w-full px-3 py-2 border rounded text-sm">
+            <option value="">선택</option>
+            ${Array.from({length: 12}, (_, i) => `<option value="${i+1}" ${state.applicationFilters.baseMonth === String(i+1) ? 'selected' : ''}>${i+1}월</option>`).join('')}
+        </select>
+    </div>
+    <div>
+        <label class="block text-sm font-semibold mb-1">수수료</label>
+        <input type="text" id="appFeeFilter" value="${state.applicationFilters.fee}" placeholder="수수료 입력" class="w-full px-3 py-2 border rounded text-sm" />
+    </div>
+</div>
+<div class="mb-4">
+    <button id="appFilterResetBtn" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm">🔄 필터 초기화</button>
+</div>  
                     </div>
 
                     <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -3021,5 +3070,6 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
