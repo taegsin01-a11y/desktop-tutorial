@@ -2677,53 +2677,50 @@ ${applicationColumns.map(col => `
                     render();
                 });
 
-                const appUploadBtn = document.getElementById('appUploadBtn');
-                if (appUploadBtn) {
-                    const appInput = document.createElement('input');
-                    appInput.type = 'file';
-                    appInput.accept = '.csv,.xlsx,.xls';
-                    appUploadBtn.addEventListener('click', () => appInput.click());
-                    appInput.addEventListener('change', async (e) => {
-                        const file = e.target.files[0];
-                        if (!file) return;
-                        try {
-                            state.isLoading = true;
-                            state.loadingProgress = 30;
-                            render();
-                            const fileExt = file.name.split('.').pop().toLowerCase();
-                            let parsedData;
-                            if (fileExt === 'xlsx' || fileExt === 'xls') {
-                                parsedData = await parseExcelFile(file);
-                            } else if (fileExt === 'csv') {
-                                parsedData = await parseCSVFile(file);
-                            }
-                            if (!state.applicationData[state.targetYear]) {
-                                state.applicationData[state.targetYear] = [];
-                            }
-                            if (fileExt === 'xlsx' || fileExt === 'xls') {
-    parsedData = await parseExcelFile(file);
-} else if (fileExt === 'csv') {
-    parsedData = await parseCSVFile(file);
-}
-if (!parsedData || !Array.isArray(parsedData)) {
-    throw new Error('파일을 파싱할 수 없습니다.');
-}
-if (!state.applicationData[state.targetYear]) {
-    state.applicationData[state.targetYear] = [];
-}
-state.applicationData[state.targetYear] = [...parsedData, ...state.applicationData[state.targetYear]];
-                            state.applicationData[state.targetYear] = [...parsedData, ...state.applicationData[state.targetYear]];
-                            state.isLoading = false;
-                            saveDataToStorage();
-                            alert(`✅ ${parsedData.length}개의 데이터가 신청접수대장에 업로드되었습니다.`);
-                            render();
-                        } catch (error) {
-                            state.isLoading = false;
-                            alert('파일 처리 오류: ' + error.message);
-                            render();
-                        }
-                    });
+               const appUploadBtn = document.getElementById('appUploadBtn');
+if (appUploadBtn) {
+    const appInput = document.createElement('input');
+    appInput.type = 'file';
+    appInput.accept = '.csv,.xlsx,.xls';
+    appUploadBtn.addEventListener('click', () => appInput.click());
+    appInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            state.isLoading = true;
+            state.loadingProgress = 30;
+            render();
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            let parsedData;
+            if (fileExt === 'xlsx' || fileExt === 'xls') {
+                parsedData = await parseExcelFile(file);
+            } else if (fileExt === 'csv') {
+                parsedData = await parseCSVFile(file);
+            }
+            if (!parsedData || !Array.isArray(parsedData)) {
+                throw new Error('파일을 파싱할 수 없습니다.');
+            }
+            // 월사용예정량을 사용량으로 매핑
+            parsedData.forEach(row => {
+                if (row['월사용예정량'] && !row['사용량']) {
+                    row['사용량'] = row['월사용예정량'];
                 }
+            });
+            if (!state.applicationData[state.targetYear]) {
+                state.applicationData[state.targetYear] = [];
+            }
+            state.applicationData[state.targetYear] = [...parsedData, ...state.applicationData[state.targetYear]];
+            state.isLoading = false;
+            saveDataToStorage();
+            alert(`✅ ${parsedData.length}개의 데이터가 신청접수대장에 업로드되었습니다.`);
+            render();
+        } catch (error) {
+            state.isLoading = false;
+            alert('파일 처리 오류: ' + error.message);
+            render();
+        }
+    });
+} 
 
                 const appAddRowBtn = document.getElementById('appAddRowBtn');
                 if (appAddRowBtn) appAddRowBtn.addEventListener('click', addApplicationRow);
@@ -3225,6 +3222,7 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
