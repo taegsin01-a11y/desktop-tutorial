@@ -2668,8 +2668,26 @@ ${applicationColumns.map(col => `
                 const cutBtn = document.getElementById('cutBtn');
                 if (cutBtn) cutBtn.addEventListener('click', cutToInspectionYear);
 
-                const cancelBtn = document.getElementById('cancelBtn');
+               const cancelBtn = document.getElementById('cancelBtn');
                 if (cancelBtn) cancelBtn.addEventListener('click', moveToCancel);
+
+                const appMapBtn = document.getElementById('appMapBtn');
+                if (appMapBtn) appMapBtn.addEventListener('click', () => {
+                    const currentAppData = state.applicationData[state.targetYear] || [];
+                    const selectedData = state.selectedApplicationRows.size > 0
+                        ? currentAppData.filter((_, idx) => state.selectedApplicationRows.has(idx))
+                        : [];
+                    if (selectedData.length === 0) {
+                        alert('지도에 표시할 행을 선택해주세요.');
+                        return;
+                    }
+                    state.mapData = selectedData;
+                    state.showMapModal = true;
+                    state.isLoadingMap = true;
+                    state.mapLoadingProgress = 0;
+                    render();
+                    setTimeout(() => initMap(selectedData), 100);
+                });
 
                 const appDetailBtn = document.getElementById('appDetailBtn');
                 if (appDetailBtn) appDetailBtn.addEventListener('click', openAppDetailModal);
@@ -3003,4 +3021,5 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
