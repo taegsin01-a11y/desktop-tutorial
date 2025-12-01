@@ -1952,11 +1952,7 @@ ${columns.map(col => `
                             <table class="w-full border-collapse text-sm" style="table-layout: fixed; min-width: 2600px;">
                                 <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                     <tr>
-                                        <th class="border px-2 py-2" style="width: 50px;">
-                                            <input type="checkbox" id="selectAllAppRows" ${state.selectedApplicationRows.size === filteredApplicationData.length && filteredApplicationData.length > 0 ? 'checked' : ''} />
-                                        </th>
-                                        <th class="border px-2 py-2" style="width: 60px;">No</th>
-                                        ${applicationColumns.map(col => `
+
                                             <th class="border px-2 py-2" style="width: ${columnWidths[col]};">
                                                 <div class="truncate" title="${col}">${col}</div>
                                             </th>
@@ -2698,6 +2694,7 @@ if (appAddRowBtn) appAddRowBtn.addEventListener('click', addApplicationRow);
     </script>
 </body>
 </html>
+
 
 
 
