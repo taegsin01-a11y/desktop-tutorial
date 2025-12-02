@@ -893,14 +893,23 @@ const lines = rows;
                 });
             }
             
-            if (state.filters.inspectionHistory) {
-                result = result.filter(row => {
-                    const history = row['검사이력'];
-                    if (state.filters.inspectionHistory === 'Y') return history === 'Y';
-                    if (state.filters.inspectionHistory === 'N') return !history || history === '' || history === 'N';
-                    return true;
-                });
-            }
+            if (state.filters.month) {
+    result = result.filter(row => {
+        const baseDate = row['기준일'];
+        if (!baseDate) return false;
+        const month = parseInt(baseDate.split('-')[1]);
+        return month === parseInt(state.filters.month);
+    });
+}
+
+if (state.filters.inspectionHistory) {
+    result = result.filter(row => {
+        const history = row['검사이력'];
+        if (state.filters.inspectionHistory === 'Y') return history === 'Y';
+        if (state.filters.inspectionHistory === 'N') return !history || history === '' || history === 'N';
+        return true;
+    });
+}
             
             if (state.searchTerm) {
                 result = result.filter(row =>
@@ -1830,10 +1839,25 @@ const existingNumbers = targetYearData
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="block text-xs font-semibold mb-1">필터 초기화</label>
-                                <button id="mainFilterResetBtn" class="w-full px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 text-xs">🔄 초기화</button>
-                            </div>
+                           <div>
+    <label class="block text-xs font-semibold mb-1">기준월</label>
+    <select id="mainBaseMonthFilter" class="w-full px-2 py-1 border rounded text-xs">
+        <option value="">전체</option>
+        ${Array.from({length: 12}, (_, i) => `<option value="${i+1}" ${state.filters.month === String(i+1) ? 'selected' : ''}>${i+1}월</option>`).join('')}
+    </select>
+</div>
+<div>
+    <label class="block text-xs font-semibold mb-1">검사이력</label>
+    <select id="mainInspectionHistoryFilter" class="w-full px-2 py-1 border rounded text-xs">
+        <option value="">전체</option>
+        <option value="Y" ${state.filters.inspectionHistory === 'Y' ? 'selected' : ''}>Y</option>
+        <option value="N" ${state.filters.inspectionHistory === 'N' ? 'selected' : ''}>N</option>
+    </select>
+</div>
+<div>
+    <label class="block text-xs font-semibold mb-1">필터 초기화</label>
+    <button id="mainFilterResetBtn" class="w-full px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 text-xs">🔄 초기화</button>
+</div> 
                         </div>
                     </div>
 
@@ -2638,6 +2662,22 @@ ${applicationColumns.map(col => `
                     }
                 });
 
+                // 기준월 필터
+                const mainBaseMonthFilter = document.getElementById('mainBaseMonthFilter');
+                if (mainBaseMonthFilter) mainBaseMonthFilter.addEventListener('change', (e) => {
+                    state.filters.month = e.target.value;
+                    state.currentPage = 1;
+                    render();
+                });
+                
+                // 검사이력 필터
+                const mainInspectionHistoryFilter = document.getElementById('mainInspectionHistoryFilter');
+                if (mainInspectionHistoryFilter) mainInspectionHistoryFilter.addEventListener('change', (e) => {
+                    state.filters.inspectionHistory = e.target.value;
+                    state.currentPage = 1;
+                    render();
+                });
+                                
                 // 필터 초기화
                 const mainFilterResetBtn = document.getElementById('mainFilterResetBtn');
                 if (mainFilterResetBtn) mainFilterResetBtn.addEventListener('click', () => {
@@ -3277,6 +3317,7 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
