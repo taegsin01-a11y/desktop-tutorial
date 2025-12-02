@@ -2128,10 +2128,10 @@ ${applicationColumns.map(col => `
 ${applicationColumns.map(col => `
                                                     <td class="border px-2 py-1 text-sm" style="width: ${columnWidths[col]};">
                                                         ${state.isEditingApplication ? `
-                                                            ${col.includes('일') ? `
-                                                                <input type="date" value="${row[col] || ''}" class="table-cell-input app-cell-edit" data-idx="${actualIdx}" data-col="${col}" />
-                                                            ` : col === '검사원' ? `
-                                                                <select class="table-cell-input app-cell-edit" data-idx="${actualIdx}" data-col="${col}">
+    ${col.includes('일') ? `
+        <input type="date" value="${row[col] || ''}" class="table-cell-input app-cell-edit" data-idx="${originalIdx}" data-col="${col}" />
+    ` : col === '검사원' ? `
+        <select class="table-cell-input app-cell-edit" data-idx="${originalIdx}" data-col="${col}">
                                                                     <option value="">선택</option>
                                                                     ${state.inspectors.map(i => `<option value="${i}" ${i === row[col] ? 'selected' : ''}>${i}</option>`).join('')}
                                                                 </select>
@@ -3277,6 +3277,7 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
