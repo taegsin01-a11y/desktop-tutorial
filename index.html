@@ -636,13 +636,37 @@
                         render();
                         
                         const text = e.target.result;
-                        
-                        if (!text || text.trim() === '') {
-                            reject(new Error('파일이 비어있습니다.'));
-                            return;
-                        }
 
-                        const lines = text.replace(/\r\n/g, '\n').split('\n').map(line => line.trim()).filter(line => line.length > 0);
+if (!text || text.trim() === '') {
+    reject(new Error('파일이 비어있습니다.'));
+    return;
+}
+
+// 쌍따옴표 안의 줄바꿈을 고려한 행 분리
+const rows = [];
+let currentRow = '';
+let insideQuotes = false;
+const chars = text.replace(/\r\n/g, '\n').split('');
+
+for (let i = 0; i < chars.length; i++) {
+    const char = chars[i];
+    if (char === '"') {
+        insideQuotes = !insideQuotes;
+        currentRow += char;
+    } else if (char === '\n' && !insideQuotes) {
+        if (currentRow.trim()) {
+            rows.push(currentRow);
+        }
+        currentRow = '';
+    } else {
+        currentRow += char;
+    }
+}
+if (currentRow.trim()) {
+    rows.push(currentRow);
+}
+
+const lines = rows;
 
                         if (lines.length < 2) {
                             reject(new Error('데이터가 없거나 형식이 올바르지 않습니다.'));
@@ -3253,6 +3277,7 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
