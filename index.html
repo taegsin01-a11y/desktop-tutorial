@@ -2135,18 +2135,18 @@ ${applicationColumns.map(col => `
                                                                     <option value="">선택</option>
                                                                     ${state.inspectors.map(i => `<option value="${i}" ${i === row[col] ? 'selected' : ''}>${i}</option>`).join('')}
                                                                 </select>
-                                                            ` : col === '검사결과' ? `
-                                                                <select class="table-cell-input app-cell-edit" data-idx="${actualIdx}" data-col="${col}">
+                                                           ` : col === '검사결과' ? `
+                                                                <select class="table-cell-input app-cell-edit" data-idx="${originalIdx}" data-col="${col}">
                                                                     <option value="">선택</option>
                                                                     ${state.inspectionResults.map(r => `<option value="${r}" ${r === row[col] ? 'selected' : ''}>${r}</option>`).join('')}
                                                                 </select>
                                                             ` : col === '접수처' ? `
-                                                                <select class="table-cell-input app-cell-edit" data-idx="${actualIdx}" data-col="${col}">
+                                                                <select class="table-cell-input app-cell-edit" data-idx="${originalIdx}" data-col="${col}">
                                                                     <option value="">선택</option>
                                                                     ${state.receiptLocations.map(l => `<option value="${l}" ${l === row[col] ? 'selected' : ''}>${l}</option>`).join('')}
                                                                 </select>
                                                             ` : `
-                                                                <input type="text" value="${row[col] || ''}" class="table-cell-input app-cell-edit" data-idx="${actualIdx}" data-col="${col}" />
+                                                                <input type="text" value="${row[col] || ''}" class="table-cell-input app-cell-edit" data-idx="${originalIdx}" data-col="${col}" />
                                                             `}
                                                         ` : `
                                                             <div class="truncate ${col === '수수료' ? 'text-right' : ''}" title="${row[col] || '-'}">${col === '수수료' ? (formatCurrency(row[col]) || '-') : (row[col] || '-')}</div>
@@ -3277,6 +3277,7 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
