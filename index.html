@@ -64,6 +64,17 @@
         .sync-dot.online { background-color: #22c55e; }
         .sync-dot.offline { background-color: #ef4444; }
         .sync-dot.syncing { background-color: #f59e0b; animation: pulse 1s infinite; }
+        /* 테이블 헤더 리사이즈 */
+        th {
+            resize: horizontal;
+            overflow: hidden;
+            min-width: 50px;
+        }
+        td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
     </style>
 </head>
 <body class="bg-gradient-to-b from-sky-400 to-sky-200 min-h-screen">
@@ -1996,6 +2007,7 @@ filteredApplicationData.sort((a, b) => {
     <button id="appMapBtn" class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800">🗺️ MAP</button>
     <button id="cutBtn" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">✂️ 잘라내기</button>
     <button id="cancelBtn" class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">취소</button>
+    <button id="appDetailBtn" class="px-4 py-2 bg-pink-600 text-white rounded hover:bg-pink-700">👁️ 상세보기</button>
 </div>
 
                       <div class="grid grid-cols-4 gap-4 mb-4">
@@ -3242,6 +3254,7 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
