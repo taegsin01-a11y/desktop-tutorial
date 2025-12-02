@@ -1037,14 +1037,14 @@ const lines = rows;
             const yy = String(state.inspectionYear).slice(2);
             const prefix = `KGT${yy}0101`;
             
-            const allAppData = Object.values(state.applicationData).flat();
-            const existingNumbers = allAppData
-                .filter(row => row['필증번호']?.startsWith(prefix))
-                .map(row => {
-                    const match = row['필증번호']?.match(/-(\d{3})$/);
-                    return match ? parseInt(match[1]) : 0;
-                })
-                .filter(num => num > 0);
+            const targetYearData = state.applicationData[state.inspectionYear] || [];
+const existingNumbers = targetYearData
+    .filter(row => row['필증번호']?.startsWith(prefix))
+    .map(row => {
+        const match = row['필증번호']?.match(/-(\d{3})$/);
+        return match ? parseInt(match[1]) : 0;
+    })
+    .filter(num => num > 0);
             
             let maxNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
             
@@ -3277,6 +3277,7 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
