@@ -1872,7 +1872,7 @@ ${columns.map(col => `
             
             const uniqueAppRegions = [...new Set(currentAppData.map(row => row['행정구역']).filter(Boolean))].sort();
 
-            let filteredApplicationData = [...currentAppData];
+            let filteredApplicationData = currentAppData.map((row, idx) => ({...row, _originalIdx: idx}));
             
             if (state.applicationFilters.region.length > 0) {
                 filteredApplicationData = filteredApplicationData.filter(row => 
@@ -1937,13 +1937,23 @@ if (state.applicationFilters.fee) {
     );
 }
 
-if (state.applicationSearchTerm) {
+          if (state.applicationSearchTerm) {
     filteredApplicationData = filteredApplicationData.filter(row =>
         Object.values(row).some(val =>
             String(val).toLowerCase().includes(state.applicationSearchTerm.toLowerCase())
         )
     );
 }
+
+// 필증번호 기준 정렬 (없는 것 상단, 있는 것 내림차순)
+filteredApplicationData.sort((a, b) => {
+    const certA = a['필증번호'] || '';
+    const certB = b['필증번호'] || '';
+    if (certA === '' && certB === '') return 0;
+    if (certA === '') return -1;
+    if (certB === '') return 1;
+    return certB.localeCompare(certA);
+});
             
             const totalAppPages = Math.ceil(filteredApplicationData.length / state.itemsPerPage);
             
@@ -2074,11 +2084,11 @@ ${applicationColumns.map(col => `
                                 </thead>
                                 <tbody>
                                     ${paginatedAppData.map((row, idx) => {
-                                        const actualIdx = (state.currentApplicationPage - 1) * state.itemsPerPage + idx;
+                                        const originalIdx = row._originalIdx;
                                         return `
-                                            <tr class="${state.selectedApplicationRows.has(actualIdx) ? 'bg-blue-50' : 'hover:bg-gray-50'}">
+                                            <tr class="${state.selectedApplicationRows.has(originalIdx) ? 'bg-blue-50' : 'hover:bg-gray-50'}">
                                                 <td class="border px-2 py-1 text-center" style="width: 50px;">
-    <input type="checkbox" class="app-row-checkbox" data-idx="${actualIdx}" ${state.selectedApplicationRows.has(actualIdx) ? 'checked' : ''} />
+    <input type="checkbox" class="app-row-checkbox" data-idx="${originalIdx}" ${state.selectedApplicationRows.has(originalIdx) ? 'checked' : ''} />
 </td>
 ${applicationColumns.map(col => `
                                                     <td class="border px-2 py-1 text-sm" style="width: ${columnWidths[col]};">
@@ -3229,6 +3239,7 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
