@@ -2717,12 +2717,15 @@ if (appUploadBtn) {
             if (!parsedData || !Array.isArray(parsedData)) {
                 throw new Error('파일을 파싱할 수 없습니다.');
             }
-            // 월사용예정량을 사용량으로 매핑
-            parsedData.forEach(row => {
-                if (row['월사용예정량'] && !row['사용량']) {
-                    row['사용량'] = row['월사용예정량'];
-                }
-            });
+           // 컬럼명 매핑 (통합탭 컬럼명 → 신청접수대장 컬럼명)
+parsedData.forEach(row => {
+    if (row['월사용예정량'] && !row['사용량']) {
+        row['사용량'] = row['월사용예정량'];
+    }
+    if (row['비고'] && !row['메모2']) {
+        row['메모2'] = row['비고'];
+    }
+});
             if (!state.applicationData[state.targetYear]) {
                 state.applicationData[state.targetYear] = [];
             }
@@ -3239,6 +3242,7 @@ if (pathwayNextPageBtn) pathwayNextPageBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
