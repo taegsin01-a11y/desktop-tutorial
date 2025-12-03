@@ -887,6 +887,8 @@
             render();
         }
 
+        
+
         function createSampleData() {
             const sampleData = [
                 {
@@ -1762,14 +1764,16 @@
                     <div class="bg-white rounded-lg p-4 mb-4 shadow">
                         <div class="flex gap-2 mb-4 flex-wrap">
                             <button id="uploadBtn" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">📤 업로드</button>
+                             <button id="uploadGoogleSheetBtn" class="flex items-center gap-2 bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800">📗 구글시트</button>
                             <div class="relative">
                                 <button id="downloadBtn" class="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">📥 다운로드</button>
-                                ${state.showDownloadMenu ? `
-                                    <div class="absolute top-full mt-1 right-0 bg-white border rounded shadow-lg z-20 w-48">
-                                        <button id="downloadExcelBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left">📊 Excel 다운로드</button>
-                                        <button id="downloadCSVBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left border-t">📄 CSV 다운로드</button>
-                                    </div>
-                                ` : ''}
+                              ${state.showDownloadMenu ? `
+                            <div class="absolute top-full mt-1 right-0 bg-white border rounded shadow-lg z-20 w-48">
+                                <button id="downloadExcelBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left">📊 Excel 다운로드</button>
+                                <button id="downloadCSVBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left border-t">📄 CSV 다운로드</button>
+                                <button id="downloadGoogleSheetBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left border-t">📗 구글 시트로 내보내기</button>
+                            </div>
+                        ` : ''}  
                             </div>
                             <button id="sampleBtn" class="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">🎯 샘플 데이터</button>
                             <button id="editToggleBtn" class="flex items-center gap-2 bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">✏️ ${state.isEditing ? '완료' : '편집'}</button>
