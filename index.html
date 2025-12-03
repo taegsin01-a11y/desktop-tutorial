@@ -423,6 +423,129 @@
             render();
         }
 
+        // ======================== 자동 클라우드 로드 ========================
+async function autoCloudLoad() {
+    try {
+        state.cloudStatus = 'syncing';
+        render();
+
+        const response = await fetch(`${CONFIG.API_URL}?action=getAllData`, {
+            method: 'GET',
+            mode: 'cors',
+            redirect: 'follow'
+        });
+        const result = await response.json();
+
+        if (result.success && result.data) {
+            // 기존 로컬 데이터와 클라우드 데이터 병합
+            if (result.data.data) {
+                Object.keys(result.data.data).forEach(year => {
+                    if (!state.data[year]) state.data[year] = [];
+                    // 중복 제거하며 병합
+                    const existingIds = new Set(state.data[year].map(r => r['시설번호']));
+                    result.data.data[year].forEach(row => {
+                        if (!existingIds.has(row['시설번호'])) {
+                            state.data[year].push(row);
+                        }
+                    });
+                });
+            }
+            
+            if (result.data.applicationData) {
+                Object.keys(result.data.applicationData).forEach(year => {
+                    if (!state.applicationData[year]) state.applicationData[year] = [];
+                    const existingIds = new Set(state.applicationData[year].map(r => r['시설번호'] + r['신청일']));
+                    result.data.applicationData[year].forEach(row => {
+                        const key = row['시설번호'] + row['신청일'];
+                        if (!existingIds.has(key)) {
+                            state.applicationData[year].push(row);
+                        }
+                    });
+                });
+            }
+            
+            if (result.data.quarterData) {
+                Object.keys(result.data.quarterData).forEach(year => {
+                    if (!state.quarterData[year]) state.quarterData[year] = [];
+                    state.quarterData[year] = result.data.quarterData[year];
+                });
+            }
+            
+            if (result.data.cancellationData) {
+                Object.keys(result.data.cancellationData).forEach(year => {
+                    if (!state.cancellationData[year]) state.cancellationData[year] = [];
+                    state.cancellationData[year] = result.data.cancellationData[year];
+                });
+            }
+            
+            if (result.data.pathwayData) {
+                Object.keys(result.data.pathwayData).forEach(year => {
+                    if (!state.pathwayData[year]) state.pathwayData[year] = [];
+                    state.pathwayData[year] = result.data.pathwayData[year];
+                });
+            }
+            
+            if (result.data.resourceData) {
+                Object.keys(result.data.resourceData).forEach(year => {
+                    if (!state.resourceData[year]) state.resourceData[year] = [];
+                    state.resourceData[year] = result.data.resourceData[year];
+                });
+            }
+
+            state.cloudStatus = 'online';
+            state.lastCloudSync = new Date();
+            state.showWelcome = false;
+            
+            saveDataToStorage();
+            console.log('☁️ 클라우드 데이터 자동 로드 완료');
+        } else {
+            state.cloudStatus = 'online';
+            console.log('☁️ 클라우드 연결됨 (새 데이터 없음)');
+        }
+    } catch (error) {
+        state.cloudStatus = 'offline';
+        console.error('클라우드 자동 로드 실패:', error);
+    }
+    render();
+}
+       
+        async function autoCloudSave() {
+    if (!CONFIG.ENABLE_CLOUD || !CONFIG.API_URL) return;
+    
+    try {
+        const allData = {
+            data: state.data,
+            applicationData: state.applicationData,
+            quarterData: state.quarterData,
+            cancellationData: state.cancellationData,
+            pathwayData: state.pathwayData,
+            resourceData: state.resourceData
+        };
+
+        const response = await fetch(CONFIG.API_URL, {
+            method: 'POST',
+            mode: 'cors',
+            redirect: 'follow',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+                action: 'bulkSave',
+                allData: allData,
+                userId: CONFIG.USER_ID
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            state.cloudStatus = 'online';
+            state.lastCloudSync = new Date();
+            console.log('☁️ 자동 저장 완료:', new Date().toLocaleTimeString());
+        }
+    } catch (error) {
+        console.error('자동 저장 실패:', error);
+    }
+}
+
         async function loadHistory() {
             if (!CONFIG.ENABLE_CLOUD || !CONFIG.API_URL) {
                 alert('⚠️ 클라우드가 비활성화되어 히스토리를 볼 수 없습니다.');
@@ -4183,11 +4306,16 @@
         }  
 
         // ======================== 초기화 ========================
-        window.addEventListener('load', function() {
-            try {
-                loadFromLocalStorage();
-                updateFilters();
-                render();
+        window.addEventListener('load', async function() {
+    try {
+        loadFromLocalStorage();
+        updateFilters();
+        render();
+        
+        // 클라우드 자동 로드 (페이지 로드 시)
+        if (CONFIG.ENABLE_CLOUD && CONFIG.API_URL) {
+            await autoCloudLoad();
+        }
               // 자료실 탭 이벤트
                 const resourceUploadBtn = document.getElementById('resourceUploadBtn');
                 if (resourceUploadBtn) {
