@@ -270,10 +270,9 @@
         };
         
         const columns = [
-            '시설번호', '시설명', '행정구역', '새주소', '구주소', '월사용예정량', 
+           '시설번호', '시설명', '행정구역', '새주소', '구주소', '사용량', 
             '전화번호', '기준일', '안전관리자명', '자격증번호', '보험사', '보험만기일', 
-            '메모', '검사일', '신청일', '검사원', '검사결과', '필증번호', '수수료', 
-            '접수처', '계산서발행일', '비고', '검사확인', '사업자번호', '대표자명', 
+            '메모', '사업자번호', '대표자명', 
             '업태', '종목', '이메일', '면제대상', '검사이력'
         ];
 
@@ -530,7 +529,7 @@
                     if (parsed.selectedYear) state.selectedYear = parsed.selectedYear;
                     if (parsed.lastSaved) state.lastSaved = new Date(parsed.lastSaved);
                     
-                    const totalData = Object.values(state.data).reduce((sum, yearData) => sum + yearData.length, 0);
+                    const totalData = Object.values(state.data).reduce((sum, yearData) => sum + (yearData ? yearData.length : 0), 0);
                     if (totalData > 0) {
                         state.showWelcome = false;
                         const sizeInMB = (new Blob([savedData]).size / (1024 * 1024)).toFixed(2);
@@ -1845,37 +1844,38 @@
 
                     <div class="bg-white rounded-lg shadow overflow-hidden">
                         <div class="overflow-x-auto" style="max-height: 600px;">
-                            <table class="w-full border-collapse" style="table-layout: fixed; min-width: 4500px;">
+                            <table class="w-full border-collapse" style="table-layout: fixed; min-width: 2520px;">
                                 <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                     <tr>
                                         <th class="border px-2 py-2 sticky left-0 bg-blue-600 z-20" style="width: 50px;">
                                             <input type="checkbox" id="selectAllRows" ${state.selectedRows.size === state.filteredData.length && state.filteredData.length > 0 ? 'checked' : ''} />
                                         </th>
-                                        ${columns.map(col => `
-                                            <th class="border px-3 py-2 text-sm" style="width: ${columnWidths[col]};">
+                                    
+                                       ${columns.map(col => `
+                                            <th class="border px-3 py-2 text-sm" style="width: 120px;">
                                                 <div class="truncate" title="${col}">${col}</div>
                                             </th>
-                                        `).join('')}
+                                        `).join('')} 
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${paginatedData.map((row, idx) => {
                                         const actualIdx = (state.currentPage - 1) * state.itemsPerPage + idx;
                                         return `
-                                            <tr class="${state.selectedRows.has(actualIdx) ? 'bg-blue-50' : 'hover:bg-gray-50'}">
-                                                <td class="border px-2 py-2 text-center sticky left-0 bg-white z-10" style="width: 50px;">
-                                                    <input type="checkbox" class="row-checkbox" data-idx="${actualIdx}" ${state.selectedRows.has(actualIdx) ? 'checked' : ''} />
-                                                </td>
-                                                ${columns.map(col => `
-                                                    <td class="border px-3 py-2 text-sm" style="width: ${columnWidths[col]}; max-width: ${columnWidths[col]};">
-                                                        ${state.isEditing ? `
-                                                            <input type="text" value="${row[col] || ''}" class="table-cell-input cell-edit" data-idx="${actualIdx}" data-col="${col}" />
-                                                        ` : `
-                                                            <div class="truncate" title="${row[col] || '-'}">${row[col] || '-'}</div>
-                                                        `}
-                                                    </td>
-                                                `).join('')}
-                                            </tr>
+                                       <tr class="${state.selectedRows.has(actualIdx) ? 'bg-blue-50' : 'hover:bg-gray-50'}">
+                                        <td class="border px-2 py-2 text-center sticky left-0 bg-white z-10" style="width: 50px;">
+                                            <input type="checkbox" class="row-checkbox" data-idx="${actualIdx}" ${state.selectedRows.has(actualIdx) ? 'checked' : ''} />
+                                        </td>
+                                        ${columns.map(col => `
+                                            <td class="border px-3 py-2 text-sm" style="width: 120px; max-width: 120px;">
+                                                ${state.isEditing ? `
+                                                    <input type="text" value="${row[col] || ''}" class="table-cell-input cell-edit" data-idx="${actualIdx}" data-col="${col}" />
+                                             ` : `
+                                                <div class="truncate ${col === '사용량' ? 'text-right' : ''}" title="${row[col] || '-'}">${col === '사용량' ? (formatCurrency(row[col]) || '-') : (row[col] || '-')}</div>
+                                            `} 
+                                            </td>
+                                        `).join('')}
+                                    </tr>    
                                         `;
                                     }).join('')}
                                     ${paginatedData.length === 0 ? `
@@ -2157,7 +2157,7 @@
                                                                 <input type="text" value="${row[col] || ''}" class="table-cell-input app-cell-edit" data-idx="${originalIdx}" data-col="${col}" />
                                                             `}
                                                         ` : `
-                                                            <div class="truncate ${col === '수수료' ? 'text-right' : ''}" title="${row[col] || '-'}">${col === '수수료' ? (formatCurrency(row[col]) || '-') : (row[col] || '-')}</div>
+                                                          <div class="truncate ${col === '수수료' ? 'text-right' : col === '사용량' ? 'text-right' : ''}" title="${row[col] || '-'}">${col === '수수료' || col === '사용량' ? (formatCurrency(row[col]) || '-') : (row[col] || '-')}</div>  
                                                         `}
                                                     </td>
                                                 `).join('')}
@@ -2313,7 +2313,7 @@
                                                         <input type="text" value="${row[col] || ''}" class="table-cell-input pathway-cell-edit" data-idx="${actualIdx}" data-col="${col}" />
                                                     `}
                                                 ` : `
-                                                    <div class="truncate" title="${row[col] || '-'}">${row[col] || '-'}</div>
+                                                   <div class="truncate ${col === '사용량' ? 'text-left' : ''}" title="${row[col] || '-'}">${row[col] || '-'}</div> 
                                                 `}
                                             </td>
                                         `).join('')}
