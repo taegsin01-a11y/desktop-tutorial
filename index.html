@@ -124,9 +124,9 @@
 
     <script>
         const CONFIG = {
-            API_URL: '',
-            USER_ID: 'user_' + Date.now(),
-            ENABLE_CLOUD: false
+            API_URL: 'https://script.google.com/macros/library/d/1v5hz2jUuJEamXPKq8IcagEEkR8PN8mAZqBFV1R99GzYytKize5Lqsjkm/33',
+            USER_ID: 'KGT_' + Date.now(),
+            ENABLE_CLOUD: true
         };
 
         const state = {
@@ -254,9 +254,11 @@
                     '한국가스안전공사 창원지사': ['경남 김해시', '경남 양산시', '경남 통영시', '경남 거제시'],
                     '한국가스안전공사 진주지사': ['경남 사천시'],
                     '한국가스안전공사 경북동부지사': ['경북 포항시', '경북 경주시'],
-                    '한국가스안전공사 대구경북지역본부': ['경북 구미시']
+                    '한국가스안전공사 대구경북지역본부': ['경북 구미시'],
+                     '양산시청 웅상출장소 경재환경과': ['경남 양산시']
                 }
             },
+           
             pathway: {
                 searchTerm: '',
                 selectedRows: new Set(),
@@ -266,6 +268,13 @@
                     region: ''
                 },
                 showDownloadMenu: false
+            },
+            resource: {
+                files: [],
+                selectedFiles: new Set(),
+                currentFolder: '',
+                searchTerm: '',
+                fileStorage: {}
             }
         };
         
@@ -313,7 +322,7 @@
             '취소번호': '120px', '취소사유': '150px', '취소일': '100px', '처리자': '90px', '비고': '150px'
         };
         // ======================== 클라우드 API 함수 ========================
-        async function cloudSaveData() {
+       async function cloudSaveData() {
             if (!CONFIG.ENABLE_CLOUD || !CONFIG.API_URL) {
                 alert('⚠️ 클라우드 저장이 비활성화되어 있습니다.\n\n설정 방법:\n1. Google Sheets 생성\n2. Apps Script 배포\n3. CONFIG.API_URL 설정\n4. CONFIG.ENABLE_CLOUD = true');
                 return;
@@ -333,7 +342,9 @@
 
                 const response = await fetch(CONFIG.API_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    mode: 'cors',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
                         action: 'bulkSave',
                         allData: allData,
@@ -357,8 +368,7 @@
             }
             render();
         }
-
-        async function cloudLoadData() {
+                async function cloudLoadData() {
             if (!CONFIG.ENABLE_CLOUD || !CONFIG.API_URL) {
                 alert('⚠️ 클라우드 저장이 비활성화되어 있습니다.');
                 return;
@@ -374,7 +384,11 @@
             render();
 
             try {
-                const response = await fetch(`${CONFIG.API_URL}?action=getAllData`);
+               const response = await fetch(`${CONFIG.API_URL}?action=getAllData`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    redirect: 'follow'
+                });
                 const result = await response.json();
 
                 state.loadingProgress = 80;
@@ -420,7 +434,11 @@
             render();
 
             try {
-                const response = await fetch(`${CONFIG.API_URL}?action=getHistory`);
+               const response = await fetch(`${CONFIG.API_URL}?action=getHistory`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    redirect: 'follow'
+                });
                 const result = await response.json();
 
                 if (result.success) {
@@ -489,8 +507,9 @@
             return prefix + String(maxNum + 1).padStart(3, '0');
         }
 
-        function saveToLocalStorage(dataToSave) {
+       function saveToLocalStorage(dataToSave) {
              try {
+                dataToSave.resourceFileStorage = state.resource.fileStorage;
                 const jsonString = JSON.stringify(dataToSave);
                 const sizeInMB = (new Blob([jsonString]).size / (1024 * 1024)).toFixed(2);
                 
@@ -524,6 +543,7 @@
                     if (parsed.cancellationData) state.cancellationData = parsed.cancellationData;
                     if (parsed.pathwayData) state.pathwayData = parsed.pathwayData;
                     if (parsed.resourceData) state.resourceData = parsed.resourceData;
+                    if (parsed.resourceFileStorage) state.resource.fileStorage = parsed.resourceFileStorage;
                     if (parsed.settings) state.settings = parsed.settings;
                     if (parsed.uploadedFileName) state.uploadedFileName = parsed.uploadedFileName;
                     if (parsed.selectedYear) state.selectedYear = parsed.selectedYear;
@@ -937,7 +957,7 @@
             
             if (state.filters.month) {
                 result = result.filter(row => {
-                    const baseDate = row['기준일'];
+                    const baseDate = row['검사일'];
                     if (!baseDate) return false;
                     const month = parseInt(baseDate.split('-')[1]);
                     return month === parseInt(state.filters.month);
@@ -1650,15 +1670,15 @@
             }
 
             if (state.activeTab === '매출분석') {
-                return `<div class="bg-white rounded-lg p-6 shadow"><h2 class="text-xl font-bold">매출분석 탭</h2><p class="text-gray-600 mt-2">매출분석 기능은 원본과 동일하게 작동합니다.</p></div>`;
+                return renderSalesAnalysisTab();
             }
 
             if (state.activeTab === '경로당') {
                 return renderPathwayTab();
             }
 
-            if (state.activeTab === '자료실') {
-                return `<div class="bg-white rounded-lg p-6 shadow"><h2 class="text-xl font-bold">자료실 탭</h2><p class="text-gray-600 mt-2">자료실 기능은 원본과 동일하게 작동합니다.</p></div>`;
+           if (state.activeTab === '자료실') {
+                return renderResourceTab();
             }
 
             if (state.activeTab === '취소') {
@@ -2196,14 +2216,478 @@
             `;
         }
 
-        function renderQuarterTab() {
+       function renderQuarterTab() {
+            const quarterColumns = ['시설번호', '시설명', '행정구역', '새주소', '기준일', '검사일', '필증번호'];
+            
+            const recipientList = Object.keys(state.quarter.recipients);
+            
+            // 신청접수대장에서 검사결과가 "합격"인 데이터만 필터링
+            const currentAppData = state.applicationData[state.targetYear] || [];
+            let filteredData = currentAppData.filter(row => row['검사결과'] === '합격');
+            
+            // 분기 필터링 (기준일 기준)
+            if (state.quarter.selectedQuarter) {
+                const quarterMonths = {
+                    '1분기': [1, 2, 3],
+                    '2분기': [4, 5, 6],
+                    '3분기': [7, 8, 9],
+                    '4분기': [10, 11, 12]
+                };
+                const months = quarterMonths[state.quarter.selectedQuarter] || [];
+                filteredData = filteredData.filter(row => {
+                    const baseDate = row['기준일'];
+                    if (!baseDate) return false;
+                    const month = parseInt(baseDate.split('-')[1]);
+                    return months.includes(month);
+                });
+            }
+            
+            // 수신처 필터링
+            if (state.quarter.selectedRecipient) {
+                const regions = state.quarter.recipients[state.quarter.selectedRecipient] || [];
+                filteredData = filteredData.filter(row => {
+                    const rowRegion = row['행정구역'] || '';
+                    return regions.some(r => rowRegion.includes(r) || rowRegion === r);
+                });
+            }
+            
+            // 행정구역 오름차순 정렬
+            filteredData.sort((a, b) => {
+                const regionA = a['행정구역'] || '';
+                const regionB = b['행정구역'] || '';
+                return regionA.localeCompare(regionB, 'ko');
+            });
+
             return `
-                <div class="bg-white rounded-lg p-6 shadow">
-                    <h2 class="text-xl font-bold mb-4">분기 탭</h2>
-                    <p class="text-gray-600">분기 기능은 원본과 동일하게 작동합니다.</p>
+                <div>
+                    <div class="bg-blue-50 border border-blue-300 rounded-lg p-4 mb-4">
+                        <h2 class="text-xl font-bold text-blue-800 flex items-center gap-2">
+                            <span>📊</span> 분기별 검사현황: ${state.targetYear}년
+                        </h2>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 mb-4 shadow">
+                        <div class="flex gap-4 items-end flex-wrap">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">해당년도</label>
+                                <select id="quarterTargetYearSelect" class="px-3 py-2 border rounded">
+                                    ${state.yearRange.map(year => `<option value="${year}" ${year === state.targetYear ? 'selected' : ''}>${year}년</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">분기 선택</label>
+                                <select id="quarterSelect" class="px-3 py-2 border rounded">
+                                    <option value="">전체</option>
+                                    ${state.quarter.quarters.map(q => `<option value="${q}" ${state.quarter.selectedQuarter === q ? 'selected' : ''}>${q}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">수신처</label>
+                                <select id="recipientSelect" class="px-3 py-2 border rounded min-w-[200px]">
+                                    <option value="">전체</option>
+                                    ${recipientList.map(r => `<option value="${r}" ${state.quarter.selectedRecipient === r ? 'selected' : ''}>${r}</option>`).join('')}
+                                </select>
+                            </div>
+                            <button id="quarterDownloadExcelBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">📥 Excel 다운로드</button>
+                            <button id="quarterDownloadCSVBtn" class="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700">📄 CSV 다운로드</button>
+                            <button id="quarterPrintBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">🖨️ 인쇄</button>
+                            <button id="quarterResetBtn" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">🔄 초기화</button>
+                        </div>
+                    </div>
+
+                    <div id="quarterPrintArea" class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="overflow-x-auto" style="max-height: 600px;">
+                            <table class="w-full border-collapse text-sm" style="table-layout: fixed;">
+                                <thead class="bg-blue-600 text-white sticky top-0 z-10">
+                                    <tr>
+                                        <th class="border px-2 py-2" style="width: 50px;">No</th>
+                                        ${quarterColumns.map(col => `
+                                            <th class="border px-2 py-2" style="width: ${col === '새주소' ? '250px' : col === '시설명' ? '150px' : col === '시설번호' ? '130px' : col === '필증번호' ? '140px' : '100px'};">
+                                                ${col}
+                                            </th>
+                                        `).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${filteredData.map((row, idx) => `
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="border px-2 py-1 text-center">${idx + 1}</td>
+                                            ${quarterColumns.map(col => `
+                                                <td class="border px-2 py-1 text-sm">
+                                                    <div class="truncate" title="${row[col] || '-'}">${row[col] || '-'}</div>
+                                                </td>
+                                            `).join('')}
+                                        </tr>
+                                    `).join('')}
+                                    ${filteredData.length === 0 ? `
+                                        <tr>
+                                            <td colspan="${quarterColumns.length + 1}" class="text-center py-8 text-gray-500">
+                                                <div class="text-4xl mb-2">📊</div>
+                                                <div>데이터가 없습니다</div>
+                                                <div class="text-sm mt-2">신청접수대장에서 검사결과가 "합격"인 데이터만 표시됩니다.</div>
+                                            </td>
+                                        </tr>
+                                    ` : ''}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="flex items-center justify-between px-4 py-3 border-t bg-gray-50">
+                            <div class="text-sm text-gray-600">
+                                전체 ${filteredData.length}건
+                                ${state.quarter.selectedQuarter ? ` | ${state.quarter.selectedQuarter}` : ''}
+                                ${state.quarter.selectedRecipient ? ` | ${state.quarter.selectedRecipient}` : ''}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
         }
+
+        function renderSalesAnalysisTab() {
+            const currentAppData = state.applicationData[state.targetYear] || [];
+            
+            // 1. 기준월별, 행정구역별 집계
+            const baseMonthStats = {};
+            // 2. 신청월별, 행정구역별 집계
+            const appMonthStats = {};
+            
+            // 행정구역 목록 수집
+            const allRegions = new Set();
+            
+            currentAppData.forEach(row => {
+                const region = row['행정구역'] || '미분류';
+                const fee = parseInt(String(row['수수료'] || '0').replace(/,/g, '')) || 0;
+                
+                allRegions.add(region);
+                
+                // 기준일에서 월 추출
+                const baseDate = row['기준일'];
+                if (baseDate) {
+                    const baseMonth = parseInt(baseDate.split('-')[1]);
+                    if (baseMonth >= 1 && baseMonth <= 12) {
+                        if (!baseMonthStats[baseMonth]) {
+                            baseMonthStats[baseMonth] = {};
+                        }
+                        if (!baseMonthStats[baseMonth][region]) {
+                            baseMonthStats[baseMonth][region] = { count: 0, fee: 0 };
+                        }
+                        baseMonthStats[baseMonth][region].count++;
+                        baseMonthStats[baseMonth][region].fee += fee;
+                    }
+                }
+                
+                // 신청일에서 월 추출
+                const appDate = row['신청일'];
+                if (appDate) {
+                    const appMonth = parseInt(appDate.split('-')[1]);
+                    if (appMonth >= 1 && appMonth <= 12) {
+                        if (!appMonthStats[appMonth]) {
+                            appMonthStats[appMonth] = {};
+                        }
+                        if (!appMonthStats[appMonth][region]) {
+                            appMonthStats[appMonth][region] = { count: 0, fee: 0 };
+                        }
+                        appMonthStats[appMonth][region].count++;
+                        appMonthStats[appMonth][region].fee += fee;
+                    }
+                }
+            });
+            
+            const sortedRegions = [...allRegions].sort((a, b) => a.localeCompare(b, 'ko'));
+            
+            // 기준월 테이블 생성 함수
+            function createMonthTable(stats, title, bgColor) {
+                let totalCount = 0;
+                let totalFee = 0;
+                const monthTotals = {};
+                const regionTotals = {};
+                
+                // 월별, 지역별 합계 계산
+                for (let m = 1; m <= 12; m++) {
+                    monthTotals[m] = { count: 0, fee: 0 };
+                    if (stats[m]) {
+                        sortedRegions.forEach(region => {
+                            if (stats[m][region]) {
+                                monthTotals[m].count += stats[m][region].count;
+                                monthTotals[m].fee += stats[m][region].fee;
+                            }
+                        });
+                    }
+                }
+                
+                sortedRegions.forEach(region => {
+                    regionTotals[region] = { count: 0, fee: 0 };
+                    for (let m = 1; m <= 12; m++) {
+                        if (stats[m] && stats[m][region]) {
+                            regionTotals[region].count += stats[m][region].count;
+                            regionTotals[region].fee += stats[m][region].fee;
+                            totalCount += stats[m][region].count;
+                            totalFee += stats[m][region].fee;
+                        }
+                    }
+                });
+                
+                return `
+                    <div class="mb-8">
+                        <h3 class="text-lg font-bold mb-3 ${bgColor} text-white px-4 py-2 rounded">${title}</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse text-sm">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="border px-2 py-2 sticky left-0 bg-gray-100 z-10">행정구역</th>
+                                        ${Array.from({length: 12}, (_, i) => `<th class="border px-2 py-1 text-center" colspan="2">${i+1}월</th>`).join('')}
+                                        <th class="border px-2 py-1 text-center bg-yellow-100" colspan="2">합계</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="border px-2 py-1 sticky left-0 bg-gray-100 z-10"></th>
+                                        ${Array.from({length: 12}, () => `<th class="border px-1 py-1 text-xs">건수</th><th class="border px-1 py-1 text-xs">수수료</th>`).join('')}
+                                        <th class="border px-1 py-1 text-xs bg-yellow-100">건수</th>
+                                        <th class="border px-1 py-1 text-xs bg-yellow-100">수수료</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${sortedRegions.map(region => `
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="border px-2 py-1 font-semibold sticky left-0 bg-white z-10">${region}</td>
+                                            ${Array.from({length: 12}, (_, i) => {
+                                                const m = i + 1;
+                                                const data = stats[m] && stats[m][region] ? stats[m][region] : { count: 0, fee: 0 };
+                                                return `
+                                                    <td class="border px-1 py-1 text-center">${data.count || '-'}</td>
+                                                    <td class="border px-1 py-1 text-right">${data.fee ? data.fee.toLocaleString() : '-'}</td>
+                                                `;
+                                            }).join('')}
+                                            <td class="border px-1 py-1 text-center font-bold bg-yellow-50">${regionTotals[region].count || '-'}</td>
+                                            <td class="border px-1 py-1 text-right font-bold bg-yellow-50">${regionTotals[region].fee ? regionTotals[region].fee.toLocaleString() : '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                    <tr class="bg-blue-50 font-bold">
+                                        <td class="border px-2 py-1 sticky left-0 bg-blue-50 z-10">월 합계</td>
+                                        ${Array.from({length: 12}, (_, i) => {
+                                            const m = i + 1;
+                                            return `
+                                                <td class="border px-1 py-1 text-center">${monthTotals[m].count || '-'}</td>
+                                                <td class="border px-1 py-1 text-right">${monthTotals[m].fee ? monthTotals[m].fee.toLocaleString() : '-'}</td>
+                                            `;
+                                        }).join('')}
+                                        <td class="border px-1 py-1 text-center bg-green-100">${totalCount || '-'}</td>
+                                        <td class="border px-1 py-1 text-right bg-green-100">${totalFee ? totalFee.toLocaleString() : '-'}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div>
+                    <div class="bg-purple-50 border border-purple-300 rounded-lg p-4 mb-4">
+                        <h2 class="text-xl font-bold text-purple-800 flex items-center gap-2">
+                            <span>📊</span> 매출분석: ${state.targetYear}년
+                        </h2>
+                        <p class="text-sm text-purple-600 mt-1">신청접수대장 데이터 기준 (총 ${currentAppData.length}건)</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 mb-4 shadow">
+                        <div class="flex gap-4 items-center mb-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">해당년도</label>
+                                <select id="salesTargetYearSelect" class="px-3 py-2 border rounded">
+                                    ${state.yearRange.map(year => `<option value="${year}" ${year === state.targetYear ? 'selected' : ''}>${year}년</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="flex-1"></div>
+                            <div class="text-sm text-gray-600">
+                                <span class="font-semibold">마지막 업데이트:</span> ${new Date().toLocaleTimeString()}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-4">
+                        ${createMonthTable(baseMonthStats, '📅 기준월별 / 행정구역별 건수 및 수수료', 'bg-blue-600')}
+                        ${createMonthTable(appMonthStats, '📝 신청월별 / 행정구역별 건수 및 수수료', 'bg-green-600')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getQuarterFilteredData() {
+            const quarterColumns = ['시설번호', '시설명', '행정구역', '새주소', '기준일', '검사일', '필증번호'];
+            const currentAppData = state.applicationData[state.targetYear] || [];
+            let filteredData = currentAppData.filter(row => row['검사결과'] === '합격');
+            
+            if (state.quarter.selectedQuarter) {
+                const quarterMonths = {
+                    '1분기': [1, 2, 3],
+                    '2분기': [4, 5, 6],
+                    '3분기': [7, 8, 9],
+                    '4분기': [10, 11, 12]
+                };
+                const months = quarterMonths[state.quarter.selectedQuarter] || [];
+                filteredData = filteredData.filter(row => {
+                    const baseDate = row['기준일'];
+                    if (!baseDate) return false;
+                    const month = parseInt(baseDate.split('-')[1]);
+                    return months.includes(month);
+                });
+            }
+            
+            if (state.quarter.selectedRecipient) {
+                const regions = state.quarter.recipients[state.quarter.selectedRecipient] || [];
+                filteredData = filteredData.filter(row => {
+                    const rowRegion = row['행정구역'] || '';
+                    return regions.some(r => rowRegion.includes(r) || rowRegion === r);
+                });
+            }
+            
+            filteredData.sort((a, b) => {
+                const regionA = a['행정구역'] || '';
+                const regionB = b['행정구역'] || '';
+                return regionA.localeCompare(regionB, 'ko');
+            });
+            
+            return { filteredData, quarterColumns };
+        }
+
+        function downloadQuarterExcel() {
+            const { filteredData, quarterColumns } = getQuarterFilteredData();
+            
+            if (filteredData.length === 0) {
+                alert('다운로드할 데이터가 없습니다.');
+                return;
+            }
+            
+            const exportData = filteredData.map(row => {
+                const obj = {};
+                quarterColumns.forEach(col => {
+                    obj[col] = row[col] || '';
+                });
+                return obj;
+            });
+            
+            const worksheet = XLSX.utils.json_to_sheet(exportData, { header: quarterColumns });
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, '분기현황');
+            
+            const fileName = `분기현황_${state.targetYear}년_${state.quarter.selectedQuarter || '전체'}_${state.quarter.selectedRecipient || '전체'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+        }
+
+        function downloadQuarterCSV() {
+            const { filteredData, quarterColumns } = getQuarterFilteredData();
+            
+            if (filteredData.length === 0) {
+                alert('다운로드할 데이터가 없습니다.');
+                return;
+            }
+            
+            const csvContent = [
+                quarterColumns.join(','),
+                ...filteredData.map(row => 
+                    quarterColumns.map(col => {
+                        const value = row[col] || '';
+                        return value.includes(',') || value.includes('"') 
+                            ? `"${value.replace(/"/g, '""')}"` 
+                            : value;
+                    }).join(',')
+                )
+            ].join('\n');
+
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `분기현황_${state.targetYear}년_${state.quarter.selectedQuarter || '전체'}_${state.quarter.selectedRecipient || '전체'}_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        function printQuarterReport() {
+            const { filteredData, quarterColumns } = getQuarterFilteredData();
+            
+            if (filteredData.length === 0) {
+                alert('인쇄할 데이터가 없습니다.');
+                return;
+            }
+            
+            // 행정구역별로 그룹핑
+            const groupedData = {};
+            filteredData.forEach(row => {
+                const region = row['행정구역'] || '기타';
+                if (!groupedData[region]) {
+                    groupedData[region] = [];
+                }
+                groupedData[region].push(row);
+            });
+            
+            const ROWS_PER_PAGE = 34; // 헤더 제외 34개 데이터
+            let pages = [];
+            
+            Object.keys(groupedData).sort((a, b) => a.localeCompare(b, 'ko')).forEach(region => {
+                const regionData = groupedData[region];
+                for (let i = 0; i < regionData.length; i += ROWS_PER_PAGE) {
+                    pages.push({
+                        region: region,
+                        data: regionData.slice(i, i + ROWS_PER_PAGE)
+                    });
+                }
+            });
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>분기별 검사현황</title>
+                    <style>
+                        @page { size: A4 portrait; margin: 10mm; }
+                        body { font-family: 'Malgun Gothic', sans-serif; font-size: 10px; }
+                        .page { page-break-after: always; }
+                        .page:last-child { page-break-after: avoid; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #333; padding: 3px 5px; text-align: left; }
+                        th { background-color: #2563eb; color: white; font-size: 9px; }
+                        td { font-size: 9px; }
+                        .header-info { margin-bottom: 10px; font-size: 12px; font-weight: bold; }
+                        .page-info { text-align: right; font-size: 9px; margin-bottom: 5px; }
+                    </style>
+                </head>
+                <body>
+                    ${pages.map((page, pageIdx) => `
+                        <div class="page">
+                            <div class="header-info">
+                                ${state.targetYear}년 ${state.quarter.selectedQuarter || ''} 검사현황 
+                                ${state.quarter.selectedRecipient ? `- ${state.quarter.selectedRecipient}` : ''}
+                            </div>
+                            <div class="page-info">페이지 ${pageIdx + 1} / ${pages.length} | 행정구역: ${page.region}</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="width:25px;">No</th>
+                                        ${quarterColumns.map(col => `<th>${col}</th>`).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${page.data.map((row, idx) => `
+                                        <tr>
+                                            <td>${idx + 1}</td>
+                                            ${quarterColumns.map(col => `<td>${row[col] || ''}</td>`).join('')}
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `).join('')}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
+        }
+
         function renderPathwayTab() {
     const currentPathwayData = state.pathwayData[state.selectedYear] || [];
     
@@ -2351,7 +2835,150 @@
         </div>
     `;
 }
+       
+       function renderResourceTab() {
+            const currentResourceData = state.resourceData[state.selectedYear] || [];
+            
+            let filteredResourceData = [...currentResourceData];
+            
+            if (state.resource.currentFolder) {
+                filteredResourceData = filteredResourceData.filter(row => row['폴더'] === state.resource.currentFolder);
+            }
+            
+            if (state.resource.searchTerm) {
+                filteredResourceData = filteredResourceData.filter(row =>
+                    Object.values(row).some(val =>
+                        String(val).toLowerCase().includes(state.resource.searchTerm.toLowerCase())
+                    )
+                );
+            }
+            
+            const uniqueFolders = [...new Set(currentResourceData.map(row => row['폴더']).filter(Boolean))].sort();
+            
+            const resourceColumns = ['폴더', '파일명', '파일형식', '파일크기', '설명', '등록일', '등록자'];
 
+            const getFileIcon = (fileType) => {
+                const type = (fileType || '').toLowerCase();
+                if (type.includes('pdf') || type.includes('acrobat')) return '📕';
+                if (type.includes('xls') || type.includes('excel')) return '📊';
+                if (type.includes('hwp') || type.includes('한글')) return '📘';
+                if (type.includes('doc') || type.includes('word')) return '📄';
+                if (type.includes('ppt') || type.includes('powerpoint')) return '📙';
+                if (type.includes('jpg') || type.includes('png') || type.includes('gif') || type.includes('image')) return '🖼️';
+                if (type.includes('zip') || type.includes('rar')) return '🗜️';
+                return '📎';
+            };
+
+            return `
+                <div>
+                    <div class="bg-indigo-50 border border-indigo-300 rounded-lg p-4 mb-4">
+                        <h2 class="text-xl font-bold text-indigo-800 flex items-center gap-2">
+                            <span>📁</span> 자료실: ${state.selectedYear}년
+                        </h2>
+                        <p class="text-sm text-indigo-600 mt-1">PDF, Excel, 한글 등 다양한 파일을 업로드하고 관리할 수 있습니다.</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 mb-4 shadow">
+                        <div class="flex gap-2 mb-4 flex-wrap">
+                            <label class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer">
+                                📤 파일 업로드
+                                <input type="file" id="resourceFileUpload" multiple accept=".pdf,.xlsx,.xls,.hwp,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip,.rar,.csv" class="hidden" />
+                            </label>
+                            <button id="resourceDownloadSelectedBtn" class="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">📥 선택 다운로드</button>
+                            <button id="resourceDeleteBtn" class="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">🗑️ 삭제</button>
+                            <button id="resourceExportListBtn" class="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">📋 목록 내보내기</button>
+                        </div>
+                        
+                        <div class="flex gap-4 items-end">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">폴더</label>
+                                <select id="resourceFolderFilter" class="px-3 py-2 border rounded min-w-[150px]">
+                                    <option value="">전체</option>
+                                    ${uniqueFolders.map(f => `<option value="${f}" ${state.resource.currentFolder === f ? 'selected' : ''}>${f}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-sm font-semibold mb-1">검색</label>
+                                <input type="text" id="resourceSearchInput" value="${state.resource.searchTerm}" placeholder="파일명, 설명 등 검색..." class="w-full px-3 py-2 border rounded" />
+                            </div>
+                            <button id="resourceSearchBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">🔍 조회</button>
+                            <button id="resourceResetBtn" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">🔄 초기화</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="overflow-x-auto" style="max-height: 600px;">
+                            <table class="w-full border-collapse text-sm">
+                                <thead class="bg-indigo-600 text-white sticky top-0 z-10">
+                                    <tr>
+                                        <th class="border px-2 py-2" style="width: 50px;">
+                                            <input type="checkbox" id="selectAllResourceRows" ${state.resource.selectedFiles.size === filteredResourceData.length && filteredResourceData.length > 0 ? 'checked' : ''} />
+                                        </th>
+                                        <th class="border px-2 py-2" style="width: 50px;">No</th>
+                                        <th class="border px-2 py-2" style="width: 50px;">형식</th>
+                                        ${resourceColumns.map(col => `
+                                            <th class="border px-3 py-2" style="width: ${col === '설명' ? '200px' : col === '파일명' ? '200px' : col === '폴더' ? '100px' : '100px'};">
+                                                ${col}
+                                            </th>
+                                        `).join('')}
+                                        <th class="border px-2 py-2" style="width: 80px;">다운로드</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${filteredResourceData.map((row, idx) => `
+                                        <tr class="${state.resource.selectedFiles.has(idx) ? 'bg-indigo-50' : 'hover:bg-gray-50'}">
+                                            <td class="border px-2 py-1 text-center">
+                                                <input type="checkbox" class="resource-row-checkbox" data-idx="${idx}" ${state.resource.selectedFiles.has(idx) ? 'checked' : ''} />
+                                            </td>
+                                            <td class="border px-2 py-1 text-center">${idx + 1}</td>
+                                            <td class="border px-2 py-1 text-center text-xl">${getFileIcon(row['파일형식'])}</td>
+                                            ${resourceColumns.map(col => `
+                                                <td class="border px-3 py-1">
+                                                    ${col === '등록일' ? `
+                                                        <input type="date" value="${row[col] || ''}" class="w-full px-2 py-1 border rounded text-sm resource-cell-edit" data-idx="${idx}" data-col="${col}" />
+                                                    ` : col === '파일명' ? `
+                                                        <div class="truncate font-medium text-blue-600" title="${row[col] || ''}">${row[col] || '-'}</div>
+                                                    ` : col === '파일크기' ? `
+                                                        <div class="text-right text-gray-600">${row[col] || '-'}</div>
+                                                    ` : `
+                                                        <input type="text" value="${row[col] || ''}" class="w-full px-2 py-1 border rounded text-sm resource-cell-edit" data-idx="${idx}" data-col="${col}" />
+                                                    `}
+                                                </td>
+                                            `).join('')}
+                                            <td class="border px-2 py-1 text-center">
+                                                ${row['fileId'] ? `
+                                                    <button class="resource-download-btn px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600" data-idx="${idx}">📥</button>
+                                                ` : '-'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                    ${filteredResourceData.length === 0 ? `
+                                        <tr>
+                                            <td colspan="${resourceColumns.length + 4}" class="text-center py-8 text-gray-500">
+                                                <div class="text-4xl mb-2">📁</div>
+                                                <div>파일이 없습니다</div>
+                                                <div class="text-sm mt-2">PDF, Excel, 한글 등 파일을 업로드하세요.</div>
+                                            </td>
+                                        </tr>
+                                    ` : ''}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="flex items-center justify-between px-4 py-3 border-t bg-gray-50">
+                            <div class="text-sm text-gray-600">
+                                전체 ${filteredResourceData.length}건
+                                ${state.resource.selectedFiles.size > 0 ? ` (${state.resource.selectedFiles.size}건 선택됨)` : ''}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                지원 형식: PDF, Excel, 한글, Word, PowerPoint, 이미지, 압축파일
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
         function renderLoadingModal() {
             return `
                 <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -3260,6 +3887,48 @@
                     render();
                 });
 
+               // 분기 탭 이벤트
+                const quarterTargetYearSelect = document.getElementById('quarterTargetYearSelect');
+                if (quarterTargetYearSelect) quarterTargetYearSelect.addEventListener('change', (e) => {
+                    state.targetYear = parseInt(e.target.value);
+                    render();
+                });
+
+                const quarterSelect = document.getElementById('quarterSelect');
+                if (quarterSelect) quarterSelect.addEventListener('change', (e) => {
+                    state.quarter.selectedQuarter = e.target.value;
+                    render();
+                });
+
+                const recipientSelect = document.getElementById('recipientSelect');
+                if (recipientSelect) recipientSelect.addEventListener('change', (e) => {
+                    state.quarter.selectedRecipient = e.target.value;
+                    render();
+                });
+
+                const quarterDownloadExcelBtn = document.getElementById('quarterDownloadExcelBtn');
+                if (quarterDownloadExcelBtn) quarterDownloadExcelBtn.addEventListener('click', downloadQuarterExcel);
+
+                const quarterDownloadCSVBtn = document.getElementById('quarterDownloadCSVBtn');
+                if (quarterDownloadCSVBtn) quarterDownloadCSVBtn.addEventListener('click', downloadQuarterCSV);
+
+                const quarterPrintBtn = document.getElementById('quarterPrintBtn');
+                if (quarterPrintBtn) quarterPrintBtn.addEventListener('click', printQuarterReport);
+
+                const quarterResetBtn = document.getElementById('quarterResetBtn');
+                if (quarterResetBtn) quarterResetBtn.addEventListener('click', () => {
+                    state.quarter.selectedQuarter = '';
+                    state.quarter.selectedRecipient = '';
+                    render();
+                });
+
+                // 매출분석 탭
+                const salesTargetYearSelect = document.getElementById('salesTargetYearSelect');
+                if (salesTargetYearSelect) salesTargetYearSelect.addEventListener('change', (e) => {
+                    state.targetYear = parseInt(e.target.value);
+                    render();
+                });
+                
                 // 지도 모달
                 const mapCloseBtn = document.getElementById('mapCloseBtn');
                 if (mapCloseBtn) mapCloseBtn.addEventListener('click', () => {
@@ -3277,13 +3946,241 @@
                     render();
                 });
 
-                const mapPrintBtn = document.getElementById('mapPrintBtn');
+             const mapPrintBtn = document.getElementById('mapPrintBtn');
                 if (mapPrintBtn) mapPrintBtn.addEventListener('click', () => window.print());
+
+                // 자료실 탭 이벤트
+              // 자료실 탭 이벤트
+                const resourceFileUpload = document.getElementById('resourceFileUpload');
+                if (resourceFileUpload) {
+                    resourceFileUpload.addEventListener('change', async (e) => {
+                        const files = e.target.files;
+                        if (!files || files.length === 0) return;
+                        
+                        const formatFileSize = (bytes) => {
+                            if (bytes === 0) return '0 Bytes';
+                            const k = 1024;
+                            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                            const i = Math.floor(Math.log(bytes) / Math.log(k));
+                            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                        };
+                        
+                        const getFileType = (fileName) => {
+                            const ext = fileName.split('.').pop().toLowerCase();
+                            const typeMap = {
+                                'pdf': 'PDF (Adobe Acrobat)',
+                                'xlsx': 'Excel',
+                                'xls': 'Excel',
+                                'hwp': '한글',
+                                'doc': 'Word',
+                                'docx': 'Word',
+                                'ppt': 'PowerPoint',
+                                'pptx': 'PowerPoint',
+                                'jpg': '이미지',
+                                'jpeg': '이미지',
+                                'png': '이미지',
+                                'gif': '이미지',
+                                'zip': '압축파일',
+                                'rar': '압축파일',
+                                'csv': 'CSV'
+                            };
+                            return typeMap[ext] || ext.toUpperCase();
+                        };
+                        
+                        if (!state.resourceData[state.selectedYear]) {
+                            state.resourceData[state.selectedYear] = [];
+                        }
+                        if (!state.resource.fileStorage[state.selectedYear]) {
+                            state.resource.fileStorage[state.selectedYear] = {};
+                        }
+                        
+                        let uploadCount = 0;
+                        for (const file of files) {
+                            const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                            
+                            const reader = new FileReader();
+                            reader.onload = function(event) {
+                                state.resource.fileStorage[state.selectedYear][fileId] = {
+                                    name: file.name,
+                                    type: file.type,
+                                    data: event.target.result
+                                };
+                            };
+                            reader.readAsDataURL(file);
+                            
+                            const newRow = {
+                                '폴더': '',
+                                '파일명': file.name,
+                                '파일형식': getFileType(file.name),
+                                '파일크기': formatFileSize(file.size),
+                                '설명': '',
+                                '등록일': new Date().toISOString().split('T')[0],
+                                '등록자': '',
+                                'fileId': fileId
+                            };
+                            
+                            state.resourceData[state.selectedYear] = [newRow, ...state.resourceData[state.selectedYear]];
+                            uploadCount++;
+                        }
+                        
+                        saveDataToStorage();
+                        alert(`✅ ${uploadCount}개의 파일이 업로드되었습니다.`);
+                        e.target.value = '';
+                        render();
+                    });
+                }
+
+                const resourceDownloadSelectedBtn = document.getElementById('resourceDownloadSelectedBtn');
+                if (resourceDownloadSelectedBtn) resourceDownloadSelectedBtn.addEventListener('click', () => {
+                    if (state.resource.selectedFiles.size === 0) {
+                        alert('다운로드할 파일을 선택해주세요.');
+                        return;
+                    }
+                    const currentData = state.resourceData[state.selectedYear] || [];
+                    const fileStorage = state.resource.fileStorage[state.selectedYear] || {};
+                    
+                    state.resource.selectedFiles.forEach(idx => {
+                        const row = currentData[idx];
+                        if (row && row.fileId && fileStorage[row.fileId]) {
+                            const fileInfo = fileStorage[row.fileId];
+                            const link = document.createElement('a');
+                            link.href = fileInfo.data;
+                            link.download = fileInfo.name;
+                            link.click();
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.resource-download-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const idx = parseInt(e.target.dataset.idx);
+                        const currentData = state.resourceData[state.selectedYear] || [];
+                        const fileStorage = state.resource.fileStorage[state.selectedYear] || {};
+                        const row = currentData[idx];
+                        
+                        if (row && row.fileId && fileStorage[row.fileId]) {
+                            const fileInfo = fileStorage[row.fileId];
+                            const link = document.createElement('a');
+                            link.href = fileInfo.data;
+                            link.download = fileInfo.name;
+                            link.click();
+                        } else {
+                            alert('파일을 찾을 수 없습니다.');
+                        }
+                    });
+                });
+
+                const resourceDeleteBtn = document.getElementById('resourceDeleteBtn');
+                if (resourceDeleteBtn) resourceDeleteBtn.addEventListener('click', () => {
+                    if (state.resource.selectedFiles.size === 0) {
+                        alert('삭제할 파일을 선택해주세요.');
+                        return;
+                    }
+                    if (confirm(`${state.resource.selectedFiles.size}개 파일을 삭제하시겠습니까?`)) {
+                        const currentData = state.resourceData[state.selectedYear] || [];
+                        const fileStorage = state.resource.fileStorage[state.selectedYear] || {};
+                        
+                        state.resource.selectedFiles.forEach(idx => {
+                            const row = currentData[idx];
+                            if (row && row.fileId && fileStorage[row.fileId]) {
+                                delete fileStorage[row.fileId];
+                            }
+                        });
+                        
+                        state.resourceData[state.selectedYear] = currentData.filter((_, idx) => !state.resource.selectedFiles.has(idx));
+                        state.resource.selectedFiles = new Set();
+                        saveDataToStorage();
+                        alert('삭제되었습니다.');
+                        render();
+                    }
+                });
+
+                const resourceExportListBtn = document.getElementById('resourceExportListBtn');
+                if (resourceExportListBtn) resourceExportListBtn.addEventListener('click', () => {
+                    const currentData = state.resourceData[state.selectedYear] || [];
+                    if (currentData.length === 0) {
+                        alert('내보낼 목록이 없습니다.');
+                        return;
+                    }
+                    const exportColumns = ['폴더', '파일명', '파일형식', '파일크기', '설명', '등록일', '등록자'];
+                    const worksheet = XLSX.utils.json_to_sheet(currentData.map(row => {
+                        const obj = {};
+                        exportColumns.forEach(col => obj[col] = row[col] || '');
+                        return obj;
+                    }), { header: exportColumns });
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, '자료실목록');
+                    XLSX.writeFile(workbook, `자료실목록_${state.selectedYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
+                });
+
+                const resourceFolderFilter = document.getElementById('resourceFolderFilter');
+                if (resourceFolderFilter) resourceFolderFilter.addEventListener('change', (e) => {
+                    state.resource.currentFolder = e.target.value;
+                    render();
+                });
+
+                const resourceSearchBtn = document.getElementById('resourceSearchBtn');
+                if (resourceSearchBtn) resourceSearchBtn.addEventListener('click', () => {
+                    const searchInput = document.getElementById('resourceSearchInput');
+                    if (searchInput) state.resource.searchTerm = searchInput.value;
+                    render();
+                });
+
+                const resourceSearchInput = document.getElementById('resourceSearchInput');
+                if (resourceSearchInput) resourceSearchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        state.resource.searchTerm = e.target.value;
+                        render();
+                    }
+                });
+
+                const resourceResetBtn = document.getElementById('resourceResetBtn');
+                if (resourceResetBtn) resourceResetBtn.addEventListener('click', () => {
+                    state.resource.currentFolder = '';
+                    state.resource.searchTerm = '';
+                    render();
+                });
+
+                const selectAllResourceRows = document.getElementById('selectAllResourceRows');
+                if (selectAllResourceRows) selectAllResourceRows.addEventListener('change', (e) => {
+                    const currentData = state.resourceData[state.selectedYear] || [];
+                    if (e.target.checked) {
+                        state.resource.selectedFiles = new Set(currentData.map((_, i) => i));
+                    } else {
+                        state.resource.selectedFiles = new Set();
+                    }
+                    render();
+                });
+
+                document.querySelectorAll('.resource-row-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => {
+                        const idx = parseInt(e.target.dataset.idx);
+                        if (e.target.checked) {
+                            state.resource.selectedFiles.add(idx);
+                        } else {
+                            state.resource.selectedFiles.delete(idx);
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.resource-cell-edit').forEach(input => {
+                    input.addEventListener('change', (e) => {
+                        const idx = parseInt(e.target.dataset.idx);
+                        const col = e.target.dataset.col;
+                        if (!state.resourceData[state.selectedYear]) {
+                            state.resourceData[state.selectedYear] = [];
+                        }
+                        if (state.resourceData[state.selectedYear][idx]) {
+                            state.resourceData[state.selectedYear][idx][col] = e.target.value;
+                            saveDataToStorage();
+                        }
+                    });
+                });
 
             } catch (error) {
                 console.error('이벤트 리스너 첨부 오류:', error);
             }
-        }
+        }  
 
         // ======================== 초기화 ========================
         window.addEventListener('load', function() {
@@ -3291,6 +4188,189 @@
                 loadFromLocalStorage();
                 updateFilters();
                 render();
+              // 자료실 탭 이벤트
+                const resourceUploadBtn = document.getElementById('resourceUploadBtn');
+                if (resourceUploadBtn) {
+                    const resourceInput = document.createElement('input');
+                    resourceInput.type = 'file';
+                    resourceInput.accept = '.csv,.xlsx,.xls';
+                    resourceUploadBtn.addEventListener('click', () => resourceInput.click());
+                    resourceInput.addEventListener('change', async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        try {
+                            state.isLoading = true;
+                            state.loadingProgress = 30;
+                            render();
+                            const fileExt = file.name.split('.').pop().toLowerCase();
+                            let parsedData;
+                            if (fileExt === 'xlsx' || fileExt === 'xls') {
+                                parsedData = await parseExcelFile(file);
+                            } else if (fileExt === 'csv') {
+                                parsedData = await parseCSVFile(file);
+                            }
+                            if (!state.resourceData[state.selectedYear]) {
+                                state.resourceData[state.selectedYear] = [];
+                            }
+                            state.resourceData[state.selectedYear] = [...parsedData, ...state.resourceData[state.selectedYear]];
+                            state.isLoading = false;
+                            saveDataToStorage();
+                            alert(`✅ ${parsedData.length}개의 데이터가 자료실에 업로드되었습니다.`);
+                            render();
+                        } catch (error) {
+                            state.isLoading = false;
+                            alert('파일 처리 오류: ' + error.message);
+                            render();
+                        }
+                    });
+                }
+
+                const resourceDownloadExcelBtn = document.getElementById('resourceDownloadExcelBtn');
+                if (resourceDownloadExcelBtn) resourceDownloadExcelBtn.addEventListener('click', () => {
+                    const currentData = state.resourceData[state.selectedYear] || [];
+                    const dataToDownload = state.resource.selectedFiles.size > 0
+                        ? currentData.filter((_, idx) => state.resource.selectedFiles.has(idx))
+                        : currentData;
+                    if (dataToDownload.length === 0) {
+                        alert('다운로드할 데이터가 없습니다.');
+                        return;
+                    }
+                    const resourceColumns = ['폴더', '파일명', '설명', '등록일', '등록자', '비고'];
+                    const worksheet = XLSX.utils.json_to_sheet(dataToDownload, { header: resourceColumns });
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, '자료실');
+                    XLSX.writeFile(workbook, `자료실_${state.selectedYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
+                });
+
+                const resourceDownloadCSVBtn = document.getElementById('resourceDownloadCSVBtn');
+                if (resourceDownloadCSVBtn) resourceDownloadCSVBtn.addEventListener('click', () => {
+                    const currentData = state.resourceData[state.selectedYear] || [];
+                    const dataToDownload = state.resource.selectedFiles.size > 0
+                        ? currentData.filter((_, idx) => state.resource.selectedFiles.has(idx))
+                        : currentData;
+                    if (dataToDownload.length === 0) {
+                        alert('다운로드할 데이터가 없습니다.');
+                        return;
+                    }
+                    const resourceColumns = ['폴더', '파일명', '설명', '등록일', '등록자', '비고'];
+                    const csvContent = [
+                        resourceColumns.join(','),
+                        ...dataToDownload.map(row => 
+                            resourceColumns.map(col => {
+                                const value = row[col] || '';
+                                return value.includes(',') || value.includes('"') 
+                                    ? `"${value.replace(/"/g, '""')}"` 
+                                    : value;
+                            }).join(',')
+                        )
+                    ].join('\n');
+                    const BOM = '\uFEFF';
+                    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `자료실_${state.selectedYear}_${new Date().toISOString().split('T')[0]}.csv`;
+                    link.click();
+                });
+
+                const resourceDeleteBtn = document.getElementById('resourceDeleteBtn');
+                if (resourceDeleteBtn) resourceDeleteBtn.addEventListener('click', () => {
+                    if (state.resource.selectedFiles.size === 0) {
+                        alert('삭제할 행을 선택해주세요.');
+                        return;
+                    }
+                    if (confirm(`${state.resource.selectedFiles.size}개 항목을 삭제하시겠습니까?`)) {
+                        const currentData = state.resourceData[state.selectedYear] || [];
+                        state.resourceData[state.selectedYear] = currentData.filter((_, idx) => !state.resource.selectedFiles.has(idx));
+                        state.resource.selectedFiles = new Set();
+                        saveDataToStorage();
+                        alert('삭제되었습니다.');
+                        render();
+                    }
+                });
+
+                const resourceAddRowBtn = document.getElementById('resourceAddRowBtn');
+                if (resourceAddRowBtn) resourceAddRowBtn.addEventListener('click', () => {
+                    const resourceColumns = ['폴더', '파일명', '설명', '등록일', '등록자', '비고'];
+                    const newRow = {};
+                    resourceColumns.forEach(col => newRow[col] = '');
+                    newRow['등록일'] = new Date().toISOString().split('T')[0];
+                    if (!state.resourceData[state.selectedYear]) {
+                        state.resourceData[state.selectedYear] = [];
+                    }
+                    state.resourceData[state.selectedYear] = [newRow, ...state.resourceData[state.selectedYear]];
+                    saveDataToStorage();
+                    render();
+                });
+
+                const resourceSaveBtn = document.getElementById('resourceSaveBtn');
+                if (resourceSaveBtn) resourceSaveBtn.addEventListener('click', () => {
+                    saveDataToStorage();
+                    alert('💾 데이터가 저장되었습니다.');
+                });
+
+                const resourceFolderFilter = document.getElementById('resourceFolderFilter');
+                if (resourceFolderFilter) resourceFolderFilter.addEventListener('change', (e) => {
+                    state.resource.currentFolder = e.target.value;
+                    render();
+                });
+
+                const resourceSearchBtn = document.getElementById('resourceSearchBtn');
+                if (resourceSearchBtn) resourceSearchBtn.addEventListener('click', () => {
+                    const searchInput = document.getElementById('resourceSearchInput');
+                    if (searchInput) state.resource.searchTerm = searchInput.value;
+                    render();
+                });
+
+                const resourceSearchInput = document.getElementById('resourceSearchInput');
+                if (resourceSearchInput) resourceSearchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        state.resource.searchTerm = e.target.value;
+                        render();
+                    }
+                });
+
+                const resourceResetBtn = document.getElementById('resourceResetBtn');
+                if (resourceResetBtn) resourceResetBtn.addEventListener('click', () => {
+                    state.resource.currentFolder = '';
+                    state.resource.searchTerm = '';
+                    render();
+                });
+
+                const selectAllResourceRows = document.getElementById('selectAllResourceRows');
+                if (selectAllResourceRows) selectAllResourceRows.addEventListener('change', (e) => {
+                    const currentData = state.resourceData[state.selectedYear] || [];
+                    if (e.target.checked) {
+                        state.resource.selectedFiles = new Set(currentData.map((_, i) => i));
+                    } else {
+                        state.resource.selectedFiles = new Set();
+                    }
+                    render();
+                });
+
+                document.querySelectorAll('.resource-row-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => {
+                        const idx = parseInt(e.target.dataset.idx);
+                        if (e.target.checked) {
+                            state.resource.selectedFiles.add(idx);
+                        } else {
+                            state.resource.selectedFiles.delete(idx);
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.resource-cell-edit').forEach(input => {
+                    input.addEventListener('change', (e) => {
+                        const idx = parseInt(e.target.dataset.idx);
+                        const col = e.target.dataset.col;
+                        if (!state.resourceData[state.selectedYear]) {
+                            state.resourceData[state.selectedYear] = [];
+                        }
+                        if (state.resourceData[state.selectedYear][idx]) {
+                            state.resourceData[state.selectedYear][idx][col] = e.target.value;
+                            saveDataToStorage();
+                        }
+                    });
+                });  
             } catch (error) {
                 console.error('초기화 오류:', error);
             }
