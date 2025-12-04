@@ -631,30 +631,29 @@ async function autoCloudLoad() {
             return prefix + String(maxNum + 1).padStart(3, '0');
         }
 
-       function saveToLocalStorage(dataToSave) {
-             try {
-                dataToSave.resourceFileStorage = state.resource.fileStorage;
-                const jsonString = JSON.stringify(dataToSave);
-                const sizeInMB = (new Blob([jsonString]).size / (1024 * 1024)).toFixed(2);
-                
-                if (parseFloat(sizeInMB) > 15) {
-                    console.warn(`⚠️ 데이터 크기가 큽니다: ${sizeInMB}MB`);
-                    return false;
-                }
-                
-                localStorage.setItem('safetySystemData', jsonString);
-                console.log(`✅ 저장 완료 (${sizeInMB}MB)`);
-                return true;
-            } catch (e) {
-                if (e.name === 'QuotaExceededError') {
-                    console.error('⚠️ 저장 공간 초과. 데이터를 정리하세요.');
-                    state.settings.autoSave = false;
-                    return false;
-                }
-                console.error('저장 오류:', e);
-                return false;
-            }
+      function saveToLocalStorage(dataToSave) {
+     try {
+        const jsonString = JSON.stringify(dataToSave);
+        const sizeInMB = (new Blob([jsonString]).size / (1024 * 1024)).toFixed(2);
+        
+        if (parseFloat(sizeInMB) > 4.5) {
+            alert('⚠️ 데이터 크기 초과: ' + sizeInMB + 'MB\n4.5MB 이하로 줄여주세요.');
+            return false;
         }
+        
+        localStorage.setItem('safetySystemData', jsonString);
+        console.log(`✅ 저장 완료 (${sizeInMB}MB)`);
+        return true;
+    } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+            alert('⚠️ 저장 공간 초과! 데이터를 정리하세요.');
+            state.settings.autoSave = false;
+            return false;
+        }
+        console.error('저장 오류:', e);
+        return false;
+    }
+}
 
         function loadFromLocalStorage() {
     try {
@@ -4569,3 +4568,4 @@ async function autoCloudLoad() {
     </script>
 </body>
 </html>
+
