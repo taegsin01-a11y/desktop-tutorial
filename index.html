@@ -518,7 +518,6 @@ async function autoCloudLoad() {
             state.lastCloudSync = new Date();
             state.showWelcome = false;
             
-            saveDataToStorage();
             console.log('☁️ 클라우드 데이터 자동 로드 완료');
         } else {
             state.cloudStatus = 'online';
@@ -1261,6 +1260,12 @@ async function autoCloudLoad() {
         }
 
         function saveDataToStorage() {
+    // 클라우드 모드면 로컬 저장 건너뛰기
+    if (CONFIG.ENABLE_CLOUD) {
+        state.lastSaved = new Date();
+        return true;
+    }
+    
     const toSave = {
         data: state.data,
         applicationData: state.applicationData,
@@ -4589,6 +4594,7 @@ async function autoCloudLoad() {
     </script>
 </body>
 </html>
+
 
 
 
