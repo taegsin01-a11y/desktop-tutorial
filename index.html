@@ -194,12 +194,12 @@
             return false;
         }
         
-        const response = await fetch(GOOGLE_CONFIG.WEB_APP_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: jsonData
-        });
+       const response = await fetch(GOOGLE_CONFIG.WEB_APP_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: jsonData
+});
         console.log('✅ 구글 시트 저장 요청 완료');
         return true;
     } catch (e) {
@@ -2077,4 +2077,5 @@
     </script>
 </body>
 </html>
+
 
