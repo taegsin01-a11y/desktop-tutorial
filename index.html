@@ -35,7 +35,12 @@
     <div id="app"></div>
 
     <script>
-        const state = {
+        const GOOGLE_CONFIG = {
+            SPREADSHEET_ID: '1s_rI5f5rb65o0sDW7KMDGbPSuHc0jJ-mwlT-ZDZ3Imo',
+            WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbw9ICwF9gIaIMH-5VzBh1ww7yZ2BY9lW3-zk0Q2F4mCaSdYUJYGZuJiAHJm8S0_RTbU4g/exec'
+        };
+
+            const state = {
             currentYear: new Date().getFullYear(),
             activeTab: '통합',
             selectedYear: new Date().getFullYear(),
@@ -177,28 +182,71 @@
             return prefix + String(maxNum + 1).padStart(3, '0');
         }
 
-        function saveToLocalStorage(dataToSave) {
+        async function saveToGoogleSheet(dataToSave) {
             try {
-                const jsonString = JSON.stringify(dataToSave);
-                const sizeInMB = (new Blob([jsonString]).size / (1024 * 1024)).toFixed(2);
-                if (parseFloat(sizeInMB) > 4.5) {
-                    alert('⚠️ 데이터 크기 초과: ' + sizeInMB + 'MB\n4.5MB 이하로 줄여주세요.');
-                    return false;
-                }
-                localStorage.setItem('safetySystemData', jsonString);
-                console.log(`✅ 저장 완료 (${sizeInMB}MB)`);
+                const response = await fetch(GOOGLE_CONFIG.WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'bulkSave', allData: dataToSave })
+                });
+                console.log('✅ 구글 시트 저장 요청 완료');
                 return true;
             } catch (e) {
-                if (e.name === 'QuotaExceededError') {
-                    alert('⚠️ 저장 공간 초과! 데이터를 정리하세요.');
-                    state.settings.autoSave = false;
-                    return false;
-                }
-                console.error('저장 오류:', e);
+                console.error('구글 시트 저장 오류:', e);
                 return false;
             }
         }
 
+        async function loadFromGoogleSheet() {
+            try {
+                const response = await fetch(GOOGLE_CONFIG.WEB_APP_URL + '?action=getAllData', {
+                    method: 'GET'
+                });
+                const result = await response.json();
+                if (result && result.data) {
+                    if (result.data.data) state.data = result.data.data;
+                    if (result.data.applicationData) state.applicationData = result.data.applicationData;
+                    if (result.data.quarterData) state.quarterData = result.data.quarterData;
+                    if (result.data.cancellationData) state.cancellationData = result.data.cancellationData;
+                    if (result.data.pathwayData) state.pathwayData = result.data.pathwayData;
+                    if (result.data.resourceData) state.resourceData = result.data.resourceData;
+                    if (result.data.settings) state.settings = result.data.settings;
+                    if (result.data.uploadedFileName) state.uploadedFileName = result.data.uploadedFileName;
+                    if (result.data.selectedYear) state.selectedYear = result.data.selectedYear;
+                    if (result.data.lastSaved) state.lastSaved = new Date(result.data.lastSaved);
+                    const totalData = Object.values(state.data).reduce((sum, yearData) => sum + (yearData ? yearData.length : 0), 0);
+                    if (totalData > 0) state.showWelcome = false;
+                    console.log('✅ 구글 시트에서 데이터 로드 완료');
+                    return true;
+                }
+                return false;
+            } catch (e) {
+                console.error('구글 시트 로드 오류:', e);
+                return false;
+            }
+        }
+
+        function saveToLocalStorage(dataToSave) {
+    try {
+        const jsonString = JSON.stringify(dataToSave);
+        const sizeInMB = (new Blob([jsonString]).size / (1024 * 1024)).toFixed(2);
+        if (parseFloat(sizeInMB) > 4.5) {
+            console.warn(`⚠️ localStorage 크기 초과 (${sizeInMB}MB) - 구글 시트에만 저장됩니다.`);
+            return 'google_only';
+        }
+        localStorage.setItem('safetySystemData', jsonString);
+        console.log(`✅ localStorage 저장 완료 (${sizeInMB}MB)`);
+        return true;
+    } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+            console.warn('⚠️ localStorage 공간 초과 - 구글 시트에만 저장됩니다.');
+            return 'google_only';
+        }
+        console.error('저장 오류:', e);
+        return 'google_only';
+    }
+}
         function loadFromLocalStorage() {
             try {
                 const savedData = localStorage.getItem('safetySystemData');
@@ -480,16 +528,17 @@
         }
 
         function saveDataToStorage() {
-            const toSave = {
-                data: state.data, applicationData: state.applicationData, quarterData: state.quarterData,
-                cancellationData: state.cancellationData, pathwayData: state.pathwayData, resourceData: state.resourceData,
-                resourceFileStorage: state.resource.fileStorage, settings: state.settings, uploadedFileName: state.uploadedFileName,
-                selectedYear: state.selectedYear, lastSaved: new Date().toISOString(), timestamp: new Date().toISOString()
-            };
-            const saved = saveToLocalStorage(toSave);
-            if (saved) { state.lastSaved = new Date(); return true; }
-            else { console.warn('⚠️ 저장 실패. 불필요한 데이터를 삭제해주세요.'); return false; }
-        }
+    const toSave = {
+        data: state.data, applicationData: state.applicationData, quarterData: state.quarterData,
+        cancellationData: state.cancellationData, pathwayData: state.pathwayData, resourceData: state.resourceData,
+        resourceFileStorage: state.resource.fileStorage, settings: state.settings, uploadedFileName: state.uploadedFileName,
+        selectedYear: state.selectedYear, lastSaved: new Date().toISOString(), timestamp: new Date().toISOString()
+    };
+    const localResult = saveToLocalStorage(toSave);
+    saveToGoogleSheet(toSave);
+    state.lastSaved = new Date();
+    return true;
+}
 
         function copyToApplication() {
             const selectedData = state.filteredData.filter((_, idx) => state.selectedRows.has(idx));
@@ -1987,12 +2036,20 @@
         }
 
         // ======================== 초기화 ========================
-        window.addEventListener('load', function() {
+        window.addEventListener('load', async function() {
             try {
+                const googleLoaded = await loadFromGoogleSheet();
+                if (!googleLoaded) {
+                    loadFromLocalStorage();
+                }
+                updateFilters();
+                render();
+            } catch (error) { 
+                console.error('초기화 오류:', error);
                 loadFromLocalStorage();
                 updateFilters();
                 render();
-            } catch (error) { console.error('초기화 오류:', error); }
+            }
         });
 
         // 자동저장
