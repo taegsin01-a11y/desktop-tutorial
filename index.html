@@ -657,34 +657,36 @@ async function autoCloudLoad() {
         }
 
         function loadFromLocalStorage() {
-            try {
-                const savedData = localStorage.getItem('safetySystemData');
-                if (savedData) {
-                    const parsed = JSON.parse(savedData);
-                    if (parsed.data) state.data = parsed.data;
-                    if (parsed.applicationData) state.applicationData = parsed.applicationData;
-                    if (parsed.quarterData) state.quarterData = parsed.quarterData;
-                    if (parsed.cancellationData) state.cancellationData = parsed.cancellationData;
-                    if (parsed.pathwayData) state.pathwayData = parsed.pathwayData;
-                    if (parsed.resourceData) state.resourceData = parsed.resourceData;
-                    if (parsed.resourceFileStorage) state.resource.fileStorage = parsed.resourceFileStorage;
-                    if (parsed.settings) state.settings = parsed.settings;
-                    if (parsed.uploadedFileName) state.uploadedFileName = parsed.uploadedFileName;
-                    if (parsed.selectedYear) state.selectedYear = parsed.selectedYear;
-                    if (parsed.lastSaved) state.lastSaved = new Date(parsed.lastSaved);
-                    
-                    const totalData = Object.values(state.data).reduce((sum, yearData) => sum + (yearData ? yearData.length : 0), 0);
-                    if (totalData > 0) {
-                        state.showWelcome = false;
-                        const sizeInMB = (new Blob([savedData]).size / (1024 * 1024)).toFixed(2);
-                        console.log(`✅ 저장된 데이터 복원: ${totalData}건 (${sizeInMB}MB)`);
-                    }
-                }
-            } catch (e) {
-                console.error('데이터 로드 실패:', e);
+    try {
+        const savedData = localStorage.getItem('safetySystemData');
+        if (savedData) {
+            const parsed = JSON.parse(savedData);
+            if (parsed.data) state.data = parsed.data;
+            if (parsed.applicationData) state.applicationData = parsed.applicationData;
+            if (parsed.quarterData) state.quarterData = parsed.quarterData;
+            if (parsed.cancellationData) state.cancellationData = parsed.cancellationData;
+            if (parsed.pathwayData) state.pathwayData = parsed.pathwayData;
+            if (parsed.resourceData) state.resourceData = parsed.resourceData;
+            if (parsed.resourceFileStorage) state.resource.fileStorage = parsed.resourceFileStorage;
+            if (parsed.settings) state.settings = parsed.settings;
+            if (parsed.uploadedFileName) state.uploadedFileName = parsed.uploadedFileName;
+            if (parsed.selectedYear) state.selectedYear = parsed.selectedYear;
+            if (parsed.lastSaved) state.lastSaved = new Date(parsed.lastSaved);
+            
+            const totalData = Object.values(state.data).reduce((sum, yearData) => sum + (yearData ? yearData.length : 0), 0);
+            if (totalData > 0) {
+                state.showWelcome = false;
+                const sizeInMB = (new Blob([savedData]).size / (1024 * 1024)).toFixed(2);
+                console.log(`✅ 저장된 데이터 복원: ${totalData}건 (${sizeInMB}MB)`);
             }
+        } else {
+            console.log('❌ localStorage에 저장된 데이터가 없습니다.');
         }
-
+    } catch (e) {
+        console.error('데이터 로드 실패:', e);
+        alert('❌ 데이터 로드 실패: ' + e.message);
+    }
+}
         function getStorageSize() {
             try {
                 const savedData = localStorage.getItem('safetySystemData');
