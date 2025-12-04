@@ -183,20 +183,31 @@
         }
 
         async function saveToGoogleSheet(dataToSave) {
-            try {
-                const response = await fetch(GOOGLE_CONFIG.WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'bulkSave', allData: dataToSave })
-                });
-                console.log('✅ 구글 시트 저장 요청 완료');
-                return true;
-            } catch (e) {
-                console.error('구글 시트 저장 오류:', e);
-                return false;
-            }
+    try {
+        const jsonData = JSON.stringify({ action: 'bulkSave', allData: dataToSave });
+        const sizeInMB = (new Blob([jsonData]).size / (1024 * 1024)).toFixed(2);
+        console.log(`📤 구글 시트 저장 시도: ${sizeInMB}MB`);
+        
+        if (parseFloat(sizeInMB) > 50) {
+            console.error('❌ 데이터가 50MB를 초과하여 구글 시트 저장 불가');
+            alert('❌ 데이터가 너무 커서 구글 시트에도 저장할 수 없습니다.\n불필요한 데이터를 삭제해주세요.');
+            return false;
         }
+        
+        const response = await fetch(GOOGLE_CONFIG.WEB_APP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: jsonData
+        });
+        const result = await response.text();
+        console.log('✅ 구글 시트 저장 완료:', result);
+        return true;
+    } catch (e) {
+        console.error('구글 시트 저장 오류:', e);
+        alert('❌ 구글 시트 저장 실패: ' + e.message);
+        return false;
+    }
+}
 
         async function loadFromGoogleSheet() {
             try {
@@ -527,7 +538,7 @@
             state.currentPage = 1;
         }
 
-        function saveDataToStorage() {
+        async function saveDataToStorage() {
     const toSave = {
         data: state.data, applicationData: state.applicationData, quarterData: state.quarterData,
         cancellationData: state.cancellationData, pathwayData: state.pathwayData, resourceData: state.resourceData,
@@ -535,7 +546,12 @@
         selectedYear: state.selectedYear, lastSaved: new Date().toISOString(), timestamp: new Date().toISOString()
     };
     const localResult = saveToLocalStorage(toSave);
-    saveToGoogleSheet(toSave);
+    if (localResult === 'google_only') {
+        const jsonString = JSON.stringify(toSave);
+        const sizeInMB = (new Blob([jsonString]).size / (1024 * 1024)).toFixed(2);
+        alert(`⚠️ 데이터 크기 초과: ${sizeInMB}MB\n4.5MB 이하로 줄여주세요.\n\n구글 시트에 저장을 시도합니다...`);
+    }
+    await saveToGoogleSheet(toSave);
     state.lastSaved = new Date();
     return true;
 }
