@@ -124,7 +124,7 @@
 
     <script>
         const CONFIG = {
-            API_URL: 'https://script.google.com/macros/s/AKfycbw9ICwF9gIaIMH-5VzBh1ww7yZ2BY9lW3-zk0Q2F4mCaSdYUJYGZuJiAHJm8S0_RTbU4g/exec',
+            API_URL: 'https://script.google.com/macros/s/AKfycbwW4nCygWXl2MBCqOhy_zP8Xkhk_g0eUQx0LtEpEaLE42F7-n7jPCjGb95ZiHKNcZxHpw/exec',
             USER_ID: 'KGT_' + Date.now(),
             ENABLE_CLOUD: true
         };
@@ -151,6 +151,7 @@
             showWelcome: true,
             lastSaved: null,
             showDownloadMenu: false,
+            showAppDownloadMenu: false,
             uploadedFileName: '',
             showDuplicateModal: false,
             duplicateInfo: { duplicates: [], selectedData: [] },
@@ -2181,7 +2182,15 @@ async function autoCloudLoad() {
                             <button id="appDeleteRowBtn" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">🗑️ 행 삭제</button>
                             <button id="appEditToggleBtn" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">${state.isEditingApplication ? '편집완료' : '편집'}</button>
                             <button id="appSaveBtn" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">저장</button>
+                            <div class="relative">
                             <button id="appDownloadBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">📥 다운로드</button>
+                            ${state.showAppDownloadMenu ? `
+                                <div class="absolute top-full mt-1 right-0 bg-white border rounded shadow-lg z-20 w-48">
+                                    <button id="appDownloadExcelBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left">📊 Excel 다운로드</button>
+                                    <button id="appDownloadCSVBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left border-t">📄 CSV 다운로드</button>
+                                </div>
+                            ` : ''}
+                        </div>                            
                             <button id="appMapBtn" class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800">🗺️ MAP</button>
                             <button id="cutBtn" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">✂️ 내년으로</button>
                             <button id="cancelBtn" class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">취소</button>
@@ -3565,6 +3574,12 @@ async function autoCloudLoad() {
 
                 const appDownloadBtn = document.getElementById('appDownloadBtn');
                 if (appDownloadBtn) appDownloadBtn.addEventListener('click', () => {
+                    state.showAppDownloadMenu = !state.showAppDownloadMenu;
+                    render();
+                });
+
+                const appDownloadExcelBtn = document.getElementById('appDownloadExcelBtn');
+                if (appDownloadExcelBtn) appDownloadExcelBtn.addEventListener('click', () => {
                     const currentAppData = state.applicationData[state.targetYear] || [];
                     const dataToDownload = state.selectedApplicationRows.size > 0
                         ? currentAppData.filter((_, idx) => state.selectedApplicationRows.has(idx))
@@ -3577,8 +3592,41 @@ async function autoCloudLoad() {
                     const workbook = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(workbook, worksheet, '신청접수대장');
                     XLSX.writeFile(workbook, `신청접수대장_${state.targetYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
+                    state.showAppDownloadMenu = false;
+                    render();
                 });
-                
+
+                const appDownloadCSVBtn = document.getElementById('appDownloadCSVBtn');
+                if (appDownloadCSVBtn) appDownloadCSVBtn.addEventListener('click', () => {
+                    const currentAppData = state.applicationData[state.targetYear] || [];
+                    const dataToDownload = state.selectedApplicationRows.size > 0
+                        ? currentAppData.filter((_, idx) => state.selectedApplicationRows.has(idx))
+                        : currentAppData;
+                    if (dataToDownload.length === 0) {
+                        alert('다운로드할 데이터가 없습니다.');
+                        return;
+                    }
+                    const csvContent = [
+                        applicationColumns.join(','),
+                        ...dataToDownload.map(row => 
+                            applicationColumns.map(col => {
+                                const value = row[col] || '';
+                                return value.includes(',') || value.includes('"') 
+                                    ? `"${value.replace(/"/g, '""')}"` 
+                                    : value;
+                            }).join(',')
+                        )
+                    ].join('\n');
+                    const BOM = '\uFEFF';
+                    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `신청접수대장_${state.targetYear}_${new Date().toISOString().split('T')[0]}.csv`;
+                    link.click();
+                    state.showAppDownloadMenu = false;
+                    render();
+                });
+                                
                 const appEditToggleBtn = document.getElementById('appEditToggleBtn');
                 if (appEditToggleBtn) appEditToggleBtn.addEventListener('click', () => {
                     state.isEditingApplication = !state.isEditingApplication;
