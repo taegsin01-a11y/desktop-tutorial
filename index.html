@@ -196,11 +196,11 @@
         
         const response = await fetch(GOOGLE_CONFIG.WEB_APP_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
             body: jsonData
         });
-        const result = await response.text();
-        console.log('✅ 구글 시트 저장 완료:', result);
+        console.log('✅ 구글 시트 저장 요청 완료');
         return true;
     } catch (e) {
         console.error('구글 시트 저장 오류:', e);
