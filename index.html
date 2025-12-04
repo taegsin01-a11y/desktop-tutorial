@@ -1239,13 +1239,38 @@ async function autoCloudLoad() {
             render();
         }
 
-      function saveDataToStorage() {
-    // 클라우드 모드면 클라우드에 저장
-    if (CONFIG.ENABLE_CLOUD) {
+     function saveDataToStorage() {
+    const toSave = {
+        data: state.data,
+        applicationData: state.applicationData,
+        quarterData: state.quarterData,
+        cancellationData: state.cancellationData,
+        pathwayData: state.pathwayData,
+        resourceData: state.resourceData,
+        resourceFileStorage: state.resource.fileStorage,
+        settings: state.settings,
+        uploadedFileName: state.uploadedFileName,
+        selectedYear: state.selectedYear,
+        lastSaved: new Date().toISOString(),
+        timestamp: new Date().toISOString()
+    };
+    
+    // 항상 localStorage에 먼저 저장
+    const saved = saveToLocalStorage(toSave);
+    
+    if (saved) {
         state.lastSaved = new Date();
-        autoCloudSave();
+        
+        // 클라우드 모드면 클라우드에도 저장 시도 (백그라운드)
+        if (CONFIG.ENABLE_CLOUD) {
+            autoCloudSave();
+        }
         return true;
-    }  
+    } else {
+        console.warn('⚠️ 저장 실패. 불필요한 데이터를 삭제해주세요.');
+        return false;
+    }
+}
     
     const toSave = {
         data: state.data,
