@@ -343,9 +343,7 @@
 
                 const response = await fetch(CONFIG.API_URL, {
                     method: 'POST',
-                    mode: 'cors',
                     redirect: 'follow',
-                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
                         action: 'bulkSave',
                         allData: allData,
@@ -528,16 +526,14 @@ async function autoCloudLoad() {
         };
 
         const response = await fetch(CONFIG.API_URL, {
-            method: 'POST',
-            mode: 'cors',
-            redirect: 'follow',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({
-                action: 'bulkSave',
-                allData: allData,
-                userId: CONFIG.USER_ID
-            })
-        });
+                method: 'POST',
+                redirect: 'follow',
+                body: JSON.stringify({
+                    action: 'bulkSave',
+                    allData: allData,
+                    userId: CONFIG.USER_ID
+                })
+            });
 
         const result = await response.json();
 
