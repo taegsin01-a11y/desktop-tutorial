@@ -1239,26 +1239,28 @@ async function autoCloudLoad() {
         }
 
         function saveDataToStorage() {
-            const toSave = {
-                data: state.data,
-                applicationData: state.applicationData,
-                quarterData: state.quarterData,
-                cancellationData: state.cancellationData,
-                pathwayData: state.pathwayData,
-                resourceData: state.resourceData,
-                settings: state.settings,
-                uploadedFileName: state.uploadedFileName,
-                selectedYear: state.selectedYear,
-                lastSaved: new Date().toISOString(),
-                timestamp: new Date().toISOString()
-            };
-            const saved = saveToLocalStorage(toSave);
-            if (saved) {
-                state.lastSaved = new Date();
-            } else {
-                console.warn('⚠️ 저장 실패. 불필요한 데이터를 삭제해주세요.');
-            }
-        }
+    const toSave = {
+        data: state.data,
+        applicationData: state.applicationData,
+        quarterData: state.quarterData,
+        cancellationData: state.cancellationData,
+        pathwayData: state.pathwayData,
+        resourceData: state.resourceData,
+        settings: state.settings,
+        uploadedFileName: state.uploadedFileName,
+        selectedYear: state.selectedYear,
+        lastSaved: new Date().toISOString(),
+        timestamp: new Date().toISOString()
+    };
+    const saved = saveToLocalStorage(toSave);
+    if (saved) {
+        state.lastSaved = new Date();
+        return true;
+    } else {
+        console.warn('⚠️ 저장 실패. 불필요한 데이터를 삭제해주세요.');
+        return false;
+    }
+}
 
         function clearAllData() {
             if (confirm('⚠️ 모든 데이터를 삭제하시겠습니까?\n(저장된 데이터도 모두 삭제됩니다)')) {
@@ -3370,8 +3372,12 @@ async function autoCloudLoad() {
 
                 const saveBtn = document.getElementById('saveBtn');
                 if (saveBtn) saveBtn.addEventListener('click', () => {
-                    saveDataToStorage();
-                    alert('💾 데이터가 저장되었습니다.');
+                    const saved = saveDataToStorage();
+                    if (saved) {
+                        alert('💾 데이터가 저장되었습니다.');
+                    } else {
+                        alert('❌ 저장 실패! 브라우저 저장 공간이 부족합니다.\n불필요한 데이터를 삭제해주세요.');
+                    }
                 });
 
                 const copyBtn = document.getElementById('copyBtn');
@@ -4561,4 +4567,3 @@ async function autoCloudLoad() {
     </script>
 </body>
 </html>
-
