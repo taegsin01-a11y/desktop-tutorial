@@ -406,7 +406,28 @@
                     state.lastCloudSync = new Date();
                     state.showWelcome = false;
                     
-                    saveDataToStorage();
+                    // localStorage 저장 시도 (실패해도 무시)
+                    try {
+                        saveDataToStorage();
+                    } catch (e) {
+                        console.log('로컬 저장 생략 (클라우드 사용 중)');
+                    }
+```
+
+---
+
+## 사용 방법
+
+1. **클라우드 저장:** 헤더의 `☁️ 클라우드 저장` 버튼 클릭
+2. **클라우드 불러오기:** 헤더의 `📥 불러오기` 버튼 클릭
+
+---
+
+## 중요 참고사항
+
+현재 설정된 Google Apps Script URL:
+```
+https://script.google.com/macros/s/AKfycbwW4nCygWXl2MBCqOhy_zP8Xkhk_g0eUQx0LtEpEaLE42F7-n7jPCjGb95ZiHKNcZxHpw/exec
                     
                     const totalData = Object.values(state.data).reduce((sum, arr) => sum + (arr?.length || 0), 0);
                     alert(`☁️ 클라우드 데이터 로드 완료!\n총 ${totalData}건의 데이터를 불러왔습니다.`);
@@ -4568,5 +4589,6 @@ async function autoCloudLoad() {
     </script>
 </body>
 </html>
+
 
 
