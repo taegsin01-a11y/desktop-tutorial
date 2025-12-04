@@ -538,39 +538,18 @@
             state.currentPage = 1;
         }
 
-        async function saveDataToStorage() {
+       async function saveDataToStorage() {
     const toSave = {
         data: state.data, applicationData: state.applicationData, quarterData: state.quarterData,
         cancellationData: state.cancellationData, pathwayData: state.pathwayData, resourceData: state.resourceData,
         resourceFileStorage: state.resource.fileStorage, settings: state.settings, uploadedFileName: state.uploadedFileName,
         selectedYear: state.selectedYear, lastSaved: new Date().toISOString(), timestamp: new Date().toISOString()
     };
-    const localResult = saveToLocalStorage(toSave);
-    if (localResult === 'google_only') {
-        const jsonString = JSON.stringify(toSave);
-        const sizeInMB = (new Blob([jsonString]).size / (1024 * 1024)).toFixed(2);
-        alert(`⚠️ 데이터 크기 초과: ${sizeInMB}MB\n4.5MB 이하로 줄여주세요.\n\n구글 시트에 저장을 시도합니다...`);
-    }
+    saveToLocalStorage(toSave);
     await saveToGoogleSheet(toSave);
     state.lastSaved = new Date();
     return true;
 }
-
-        function copyToApplication() {
-            const selectedData = state.filteredData.filter((_, idx) => state.selectedRows.has(idx));
-            if (selectedData.length === 0) { alert('복사할 데이터를 선택해주세요.'); return; }
-            if (!state.applicationData[state.targetYear]) state.applicationData[state.targetYear] = [];
-            const duplicates = selectedData.filter(item => state.applicationData[state.targetYear].some(app => app['시설번호'] === item['시설번호']));
-            if (duplicates.length > 0) { state.duplicateInfo = { duplicates, selectedData }; state.showDuplicateModal = true; render(); return; }
-            selectedData.forEach(row => { if (row['월사용예정량'] && !row['사용량']) row['사용량'] = row['월사용예정량']; });
-            const existingData = state.applicationData[state.targetYear] || [];
-            state.applicationData[state.targetYear] = [...selectedData, ...existingData];
-            state.activeTab = '신청접수대장';
-            state.selectedRows = new Set();
-            alert(`${selectedData.length}개 항목이 신청접수대장으로 복사되었습니다.`);
-            saveDataToStorage();
-            render();
-        }
 
         function confirmDuplicateCopy() {
             if (!state.applicationData[state.targetYear]) state.applicationData[state.targetYear] = [];
@@ -2077,5 +2056,6 @@
     </script>
 </body>
 </html>
+
 
 
