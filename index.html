@@ -543,8 +543,7 @@
                 result = result.filter(row => Object.values(row).some(val => String(val).toLowerCase().includes(state.searchTerm.toLowerCase())));
             }
             state.filteredData = result;
-            state.currentPage = 1;
-        }
+                   }
 
        async function saveDataToStorage() {
     const toSave = {
@@ -2131,6 +2130,7 @@
     </script>
 </body>
 </html>
+
 
 
 
