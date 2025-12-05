@@ -188,9 +188,9 @@
         const sizeInMB = (new Blob([jsonData]).size / (1024 * 1024)).toFixed(2);
         console.log(`📤 구글 시트 저장 시도: ${sizeInMB}MB`);
         
-        if (parseFloat(sizeInMB) > 50) {
-            console.error('❌ 데이터가 50MB를 초과하여 구글 시트 저장 불가');
-            alert('❌ 데이터가 너무 커서 구글 시트에도 저장할 수 없습니다.\n불필요한 데이터를 삭제해주세요.');
+        if (parseFloat(sizeInMB) > 500) {
+            console.error('❌ 데이터가 500MB를 초과');
+            alert('❌ 데이터가 500MB를 초과했읍니다 .');
             return false;
         }
         
@@ -2056,6 +2056,7 @@
     </script>
 </body>
 </html>
+
 
 
 
