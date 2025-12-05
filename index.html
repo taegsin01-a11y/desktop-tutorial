@@ -524,13 +524,13 @@
                 });
             }
             if (state.filters.month) {
-                result = result.filter(row => {
-                    const baseDate = row['검사일'];
-                    if (!baseDate) return false;
-                    const month = parseInt(baseDate.split('-')[1]);
-                    return month === parseInt(state.filters.month);
-                });
-            }
+            result = result.filter(row => {
+                const baseDate = row['기준일'];
+                if (!baseDate) return false;
+                const month = parseInt(baseDate.split('-')[1]);
+                return month === parseInt(state.filters.month);
+            });
+        }
             if (state.filters.inspectionHistory) {
                 result = result.filter(row => {
                     const history = row['검사이력'];
@@ -613,7 +613,25 @@
                 render();
             }
         }
-
+        function copyToApplication() {
+                if (state.selectedRows.size === 0) { alert('복사할 데이터를 선택해주세요.'); return; }
+                const selectedData = state.filteredData.filter((_, idx) => state.selectedRows.has(idx)).map(item => ({...item}));
+                const existingFacilityNumbers = (state.applicationData[state.targetYear] || []).map(row => row['시설번호']);
+                const duplicates = selectedData.filter(item => existingFacilityNumbers.includes(item['시설번호']));
+                if (duplicates.length > 0) {
+                    state.duplicateInfo = { duplicates, selectedData };
+                    state.showDuplicateModal = true;
+                    render();
+                    return;
+                }
+                if (!state.applicationData[state.targetYear]) state.applicationData[state.targetYear] = [];
+                state.applicationData[state.targetYear] = [...selectedData, ...state.applicationData[state.targetYear]];
+                state.activeTab = '신청접수대장';
+                state.selectedRows = new Set();
+                alert(`${selectedData.length}개 항목이 신청접수대장으로 복사되었습니다.`);
+                saveDataToStorage();
+                render();
+            }
         function deleteSelectedRows() {
             if (state.selectedRows.size === 0) { alert('삭제할 행을 선택해주세요.'); return; }
             state.showDeleteModal = true;
@@ -1379,10 +1397,13 @@
             
             if (state.applicationFilters.region.length > 0) filteredApplicationData = filteredApplicationData.filter(row => state.applicationFilters.region.includes(row['행정구역']));
             if (state.applicationFilters.inspector) filteredApplicationData = filteredApplicationData.filter(row => row['검사원'] === state.applicationFilters.inspector);
-            if (state.applicationFilters.inspectionResult) filteredApplicationData = filteredApplicationData.filter(row => row['검사결과'] === state.applicationFilters.inspectionResult);
-            if (state.applicationFilters.receiptLocation) filteredApplicationData = filteredApplicationData.filter(row => row['접수처'] === state.applicationFilters.receiptLocation);
-            if (state.applicationFilters.baseMonth) filteredApplicationData = filteredApplicationData.filter(row => { const baseDate = row['기준일']; if (!baseDate) return false; const month = parseInt(baseDate.split('-')[1]); return month === parseInt(state.applicationFilters.baseMonth); });
-            if (state.applicationFilters.applicationDateFrom) filteredApplicationData = filteredApplicationData.filter(row => row['신청일'] >= state.applicationFilters.applicationDateFrom);
+            if (state.applicationFilters.inspectionResult) {
+            if (state.applicationFilters.inspectionResult === '공란') {
+                filteredApplicationData = filteredApplicationData.filter(row => !row['검사결과'] || row['검사결과'] === '' || row['검사결과'] === '공란');
+            } else {
+                filteredApplicationData = filteredApplicationData.filter(row => row['검사결과'] === state.applicationFilters.inspectionResult);
+            }
+        }
             if (state.applicationFilters.applicationDateTo) filteredApplicationData = filteredApplicationData.filter(row => row['신청일'] <= state.applicationFilters.applicationDateTo);
             if (state.applicationFilters.inspectionDateFrom) filteredApplicationData = filteredApplicationData.filter(row => row['검사일'] >= state.applicationFilters.inspectionDateFrom);
             if (state.applicationFilters.inspectionDateTo) filteredApplicationData = filteredApplicationData.filter(row => row['검사일'] <= state.applicationFilters.inspectionDateTo);
@@ -1902,7 +1923,7 @@
                 document.querySelectorAll('.cell-edit').forEach(input => { input.addEventListener('change', (e) => { const idx = parseInt(e.target.dataset.idx); const col = e.target.dataset.col; state.data[state.selectedYear][idx][col] = e.target.value; }); });
                 const selectAllRegions = document.getElementById('selectAllRegions');
                 if (selectAllRegions) selectAllRegions.addEventListener('change', (e) => { const uniqueRegions = [...new Set((state.data[state.selectedYear] || []).map(row => (row['행정구역'] || '').replace(/[\\\/]/g, '').trim()).filter(Boolean))]; state.filters.region = e.target.checked ? [...uniqueRegions] : []; render(); });
-                document.querySelectorAll('.region-checkbox').forEach(checkbox => { checkbox.addEventListener('change', (e) => { const region = e.target.value; if (e.target.checked) state.filters.region.push(region); else state.filters.region = state.filters.region.filter(r => r !== region); }); });
+                document.querySelectorAll('.region-checkbox').forEach(checkbox => { checkbox.addEventListener('change', (e) => { const region = e.target.value; if (e.target.checked) state.filters.region.push(region); else state.filters.region = state.filters.region.filter(r => r !== region); render(); }); });
                 const prevPageBtn = document.getElementById('prevPageBtn');
                 if (prevPageBtn) prevPageBtn.addEventListener('click', () => { state.currentPage = Math.max(1, state.currentPage - 1); render(); });
                 const nextPageBtn = document.getElementById('nextPageBtn');
