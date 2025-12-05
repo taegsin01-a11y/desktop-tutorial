@@ -1478,18 +1478,18 @@
                             <table class="w-full border-collapse text-sm" style="table-layout: fixed; min-width: 2600px;">
                                 <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                     <tr>
-                                        <th class="border px-2 py-2" style="width: 50px;"><input type="checkbox" id="selectAllAppRows" ${state.selectedApplicationRows.size === filteredApplicationData.length && filteredApplicationData.length > 0 ? 'checked' : ''} /></th>
-                                        ${applicationColumns.map(col => `<th class="border px-2 py-2" style="width: ${columnWidths[col]};"><div class="truncate" title="${col}">${col}</div></th>`).join('')}
+                                     <th class="border px-2 py-2 sticky left-0 top-0 bg-blue-600 z-30" style="width: 50px;"><input type="checkbox" id="selectAllAppRows" ${state.selectedApplicationRows.size === filteredApplicationData.length && filteredApplicationData.length > 0 ? 'checked' : ''} /></th>  
+                                      ${applicationColumns.map((col, colIdx) => `<th class="border px-2 py-2 ${colIdx === 0 ? 'sticky left-[50px] top-0 bg-blue-600 z-30' : colIdx === 1 ? 'sticky left-[170px] top-0 bg-blue-600 z-30' : ''}" style="width: ${columnWidths[col]};"><div class="truncate" title="${col}">${col}</div></th>`).join('')}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${paginatedAppData.map((row, idx) => {
                                         const originalIdx = row._originalIdx;
                                         return `
-                                            <tr class="${state.selectedApplicationRows.has(originalIdx) ? 'bg-blue-50' : 'hover:bg-gray-50'}">
-                                                <td class="border px-2 py-1 text-center" style="width: 50px;"><input type="checkbox" class="app-row-checkbox" data-idx="${originalIdx}" ${state.selectedApplicationRows.has(originalIdx) ? 'checked' : ''} /></td>
-                                                ${applicationColumns.map(col => `
-                                                    <td class="border px-2 py-1 text-sm" style="width: ${columnWidths[col]};">
+                                            <tr class="${state.selectedApplicationRows.has(originalIdx) ? 'bg-yellow-200' : 'hover:bg-gray-50'}">
+                                                <td class="border px-2 py-1 text-center sticky left-0 z-10 ${state.selectedApplicationRows.has(originalIdx) ? 'bg-yellow-200' : 'bg-white'}" style="width: 50px;"><input type="checkbox" class="app-row-checkbox" data-idx="${originalIdx}" ${state.selectedApplicationRows.has(originalIdx) ? 'checked' : ''} /></td>
+${applicationColumns.map((col, colIdx) => `
+    <td class="border px-2 py-1 text-sm ${colIdx === 0 ? 'sticky left-[50px] z-10 ' + (state.selectedApplicationRows.has(originalIdx) ? 'bg-yellow-200' : 'bg-white') : colIdx === 1 ? 'sticky left-[170px] z-10 ' + (state.selectedApplicationRows.has(originalIdx) ? 'bg-yellow-200' : 'bg-white') : ''}" style="width: ${columnWidths[col]};">
                                                         ${state.isEditingApplication ? `
                                                             ${col.includes('일') ? `<input type="date" value="${row[col] || ''}" class="table-cell-input app-cell-edit" data-idx="${originalIdx}" data-col="${col}" />` :
                                                             col === '검사원' ? `<select class="table-cell-input app-cell-edit" data-idx="${originalIdx}" data-col="${col}"><option value="">선택</option>${state.inspectors.map(i => `<option value="${i}" ${i === row[col] ? 'selected' : ''}>${i}</option>`).join('')}</select>` :
