@@ -543,7 +543,8 @@
                 result = result.filter(row => Object.values(row).some(val => String(val).toLowerCase().includes(state.searchTerm.toLowerCase())));
             }
             state.filteredData = result;
-                   }
+            
+        }
 
        async function saveDataToStorage() {
     const toSave = {
@@ -1567,50 +1568,52 @@
         }
 
         function renderCancellationTab() {
-            const currentCancelData = state.cancellationData[state.targetYear] || [];
-            const cancelColsHtml = cancellationColumns.map(function(col) {
-                const width = col === '새주소' ? '200px' : col === '시설명' ? '150px' : '100px';
-                return '<th class="border px-2 py-2" style="width: ' + width + ';"><div class="truncate" title="' + col + '">' + col + '</div></th>';
+    const currentCancelData = state.cancellationData[state.targetYear] || [];
+    const cancelColsHtml = cancellationColumns.map(function(col) {
+        const width = col === '새주소' ? '200px' : col === '시설명' ? '150px' : '100px';
+        return '<th class="border px-2 py-2" style="width: ' + width + ';"><div class="truncate" title="' + col + '">' + col + '</div></th>';
+    }).join('');
+    const yearOptionsHtml = state.yearRange.map(function(year) {
+        const selected = year === state.targetYear ? 'selected' : '';
+        return '<option value="' + year + '" ' + selected + '>' + year + '년</option>';
+    }).join('');
+    let rowsHtml = '';
+    if (currentCancelData.length === 0) {
+        rowsHtml = '<tr><td colspan="' + (cancellationColumns.length + 2) + '" class="text-center py-8 text-gray-500"><div class="text-4xl mb-2">🚫</div><div>취소 데이터가 없습니다</div></td></tr>';
+    } else {
+        currentCancelData.forEach(function(row, idx) {
+            const cellsHtml = cancellationColumns.map(function(col) {
+                const val = row[col] || '-';
+                return '<td class="border px-2 py-1 text-sm"><div class="truncate" title="' + val + '">' + val + '</div></td>';
             }).join('');
-            const yearOptionsHtml = state.yearRange.map(function(year) {
-                const selected = year === state.targetYear ? 'selected' : '';
-                return '<option value="' + year + '" ' + selected + '>' + year + '년</option>';
-            }).join('');
-            let rowsHtml = '';
-            if (currentCancelData.length === 0) {
-                rowsHtml = '<tr><td colspan="' + (cancellationColumns.length + 1) + '" class="text-center py-8 text-gray-500"><div class="text-4xl mb-2">🚫</div><div>취소 데이터가 없습니다</div></td></tr>';
-            } else {
-                currentCancelData.forEach(function(row, idx) {
-                    const cellsHtml = cancellationColumns.map(function(col) {
-                        const val = row[col] || '-';
-                        return '<td class="border px-2 py-1 text-sm"><div class="truncate" title="' + val + '">' + val + '</div></td>';
-                    }).join('');
-                    rowsHtml += '<tr class="hover:bg-gray-50"><td class="border px-2 py-1 text-center">' + (idx + 1) + '</td>' + cellsHtml + '</tr>';
-                });
-            }
-            return '<div>' +
-                '<div class="bg-orange-50 border border-orange-300 rounded-lg p-4 mb-4">' +
-                    '<h2 class="text-xl font-bold text-orange-800 flex items-center gap-2"><span>🚫</span> 취소대장: ' + state.targetYear + '년</h2>' +
-                    '<p class="text-sm text-orange-600 mt-1">총 ' + currentCancelData.length + '건</p>' +
-                '</div>' +
-                '<div class="bg-white rounded-lg p-4 mb-4 shadow">' +
-                    '<div class="flex gap-4 items-center mb-4">' +
-                        '<div><label class="block text-sm font-semibold mb-1">해당년도</label><select id="cancelTargetYearSelect" class="px-3 py-2 border rounded">' + yearOptionsHtml + '</select></div>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="bg-white rounded-lg shadow overflow-hidden">' +
-                    '<div class="overflow-x-auto" style="max-height: 600px;">' +
-                        '<table class="w-full border-collapse text-sm" style="table-layout: fixed; min-width: 1400px;">' +
-                            '<thead class="bg-orange-600 text-white sticky top-0 z-10">' +
-                                '<tr><th class="border px-2 py-2" style="width: 50px;">No</th>' + cancelColsHtml + '</tr>' +
-                            '</thead>' +
-                            '<tbody>' + rowsHtml + '</tbody>' +
-                        '</table>' +
-                    '</div>' +
-                    '<div class="flex items-center justify-between px-4 py-3 border-t bg-gray-50"><div class="text-sm text-gray-600">전체 ' + currentCancelData.length + '건</div></div>' +
-                '</div>' +
-            '</div>';
-        }
+            const isSelected = state.selectedCancellationRows.has(idx);
+            rowsHtml += '<tr class="' + (isSelected ? 'bg-orange-50' : 'hover:bg-gray-50') + '"><td class="border px-2 py-1 text-center"><input type="checkbox" class="cancel-row-checkbox" data-idx="' + idx + '" ' + (isSelected ? 'checked' : '') + ' /></td><td class="border px-2 py-1 text-center">' + (idx + 1) + '</td>' + cellsHtml + '</tr>';
+        });
+    }
+    return '<div>' +
+        '<div class="bg-orange-50 border border-orange-300 rounded-lg p-4 mb-4">' +
+            '<h2 class="text-xl font-bold text-orange-800 flex items-center gap-2"><span>🚫</span> 취소대장: ' + state.targetYear + '년</h2>' +
+            '<p class="text-sm text-orange-600 mt-1">총 ' + currentCancelData.length + '건</p>' +
+        '</div>' +
+        '<div class="bg-white rounded-lg p-4 mb-4 shadow">' +
+            '<div class="flex gap-4 items-center mb-4">' +
+                '<div><label class="block text-sm font-semibold mb-1">해당년도</label><select id="cancelTargetYearSelect" class="px-3 py-2 border rounded">' + yearOptionsHtml + '</select></div>' +
+                '<button id="cancelDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">🗑️ 삭제</button>' +
+            '</div>' +
+        '</div>' +
+        '<div class="bg-white rounded-lg shadow overflow-hidden">' +
+            '<div class="overflow-x-auto" style="max-height: 600px;">' +
+                '<table class="w-full border-collapse text-sm" style="table-layout: fixed; min-width: 1400px;">' +
+                    '<thead class="bg-orange-600 text-white sticky top-0 z-10">' +
+                        '<tr><th class="border px-2 py-2" style="width: 50px;"><input type="checkbox" id="selectAllCancelRows" ' + (state.selectedCancellationRows.size === currentCancelData.length && currentCancelData.length > 0 ? 'checked' : '') + ' /></th><th class="border px-2 py-2" style="width: 50px;">No</th>' + cancelColsHtml + '</tr>' +
+                    '</thead>' +
+                    '<tbody>' + rowsHtml + '</tbody>' +
+                '</table>' +
+            '</div>' +
+            '<div class="flex items-center justify-between px-4 py-3 border-t bg-gray-50"><div class="text-sm text-gray-600">전체 ' + currentCancelData.length + '건' + (state.selectedCancellationRows.size > 0 ? ' (' + state.selectedCancellationRows.size + '건 선택됨)' : '') + '</div></div>' +
+        '</div>' +
+    '</div>';
+}
 
         function renderFooter() {
             return `
@@ -2045,7 +2048,18 @@
                 if (quarterResetBtn) quarterResetBtn.addEventListener('click', () => { state.quarter.selectedQuarter = ''; state.quarter.selectedRecipient = ''; render(); });
                 const salesTargetYearSelect = document.getElementById('salesTargetYearSelect');
                 if (salesTargetYearSelect) salesTargetYearSelect.addEventListener('change', (e) => { state.targetYear = parseInt(e.target.value); render(); });
+                
+                // 취소 탭 이벤트
+                const cancelTargetYearSelect = document.getElementById('cancelTargetYearSelect');
+                if (cancelTargetYearSelect) cancelTargetYearSelect.addEventListener('change', (e) => { state.targetYear = parseInt(e.target.value); render(); });
+                const selectAllCancelRows = document.getElementById('selectAllCancelRows');
+                if (selectAllCancelRows) selectAllCancelRows.addEventListener('change', (e) => { const currentData = state.cancellationData[state.targetYear] || []; if (e.target.checked) state.selectedCancellationRows = new Set(currentData.map((_, i) => i)); else state.selectedCancellationRows = new Set(); render(); });
+                document.querySelectorAll('.cancel-row-checkbox').forEach(checkbox => { checkbox.addEventListener('change', (e) => { const idx = parseInt(e.target.dataset.idx); if (e.target.checked) state.selectedCancellationRows.add(idx); else state.selectedCancellationRows.delete(idx); }); });
+                const cancelTabDeleteBtn = document.getElementById('cancelDeleteBtn');
+                if (cancelTabDeleteBtn) cancelTabDeleteBtn.addEventListener('click', () => { if (state.selectedCancellationRows.size === 0) { alert('삭제할 행을 선택해주세요.'); return; } if (confirm(state.selectedCancellationRows.size + '개 항목을 삭제하시겠습니까?')) { const currentData = state.cancellationData[state.targetYear] || []; state.cancellationData[state.targetYear] = currentData.filter((_, idx) => !state.selectedCancellationRows.has(idx)); state.selectedCancellationRows = new Set(); saveDataToStorage(); alert('삭제되었습니다.'); render(); } });
 
+
+                
                 // 경로당 탭 이벤트
                 const pathwayUploadBtn = document.getElementById('pathwayUploadBtn');
                 if (pathwayUploadBtn) { const pathwayInput = document.createElement('input'); pathwayInput.type = 'file'; pathwayInput.accept = '.csv,.xlsx,.xls'; pathwayUploadBtn.addEventListener('click', () => pathwayInput.click()); pathwayInput.addEventListener('change', async (e) => { const file = e.target.files[0]; if (!file) return; try { state.isLoading = true; state.loadingProgress = 30; render(); const fileExt = file.name.split('.').pop().toLowerCase(); let parsedData; if (fileExt === 'xlsx' || fileExt === 'xls') parsedData = await parseExcelFile(file); else if (fileExt === 'csv') parsedData = await parseCSVFile(file); if (!state.pathwayData[state.selectedYear]) state.pathwayData[state.selectedYear] = []; state.pathwayData[state.selectedYear] = [...parsedData, ...state.pathwayData[state.selectedYear]]; state.isLoading = false; saveDataToStorage(); alert(`✅ ${parsedData.length}개의 데이터가 경로당에 업로드되었습니다.`); render(); } catch (error) { state.isLoading = false; alert('파일 처리 오류: ' + error.message); render(); } }); }
@@ -2130,8 +2144,6 @@
     </script>
 </body>
 </html>
-
-
 
 
 
