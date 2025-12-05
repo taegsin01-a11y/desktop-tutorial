@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+추<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -1170,7 +1170,7 @@
             if (state.activeTab === '매출분석') return renderSalesAnalysisTab();
             if (state.activeTab === '경로당') return renderPathwayTab();
             if (state.activeTab === '자료실') return renderResourceTab();
-            if (state.activeTab === '취소') return `<div class="bg-white rounded-lg p-6 shadow"><h2 class="text-xl font-bold">취소 탭</h2><p class="text-gray-600 mt-2">취소 기능은 원본과 동일하게 작동합니다.</p></div>`;
+            if (state.activeTab === '취소') return renderCancellationTab();
             return renderMainTab();
         }
 
@@ -1544,6 +1544,52 @@
                     </div>
                 </div>
             `;
+        }
+
+        function renderCancellationTab() {
+            const currentCancelData = state.cancellationData[state.targetYear] || [];
+            const cancelColsHtml = cancellationColumns.map(function(col) {
+                const width = col === '새주소' ? '200px' : col === '시설명' ? '150px' : '100px';
+                return '<th class="border px-2 py-2" style="width: ' + width + ';"><div class="truncate" title="' + col + '">' + col + '</div></th>';
+            }).join('');
+            const yearOptionsHtml = state.yearRange.map(function(year) {
+                const selected = year === state.targetYear ? 'selected' : '';
+                return '<option value="' + year + '" ' + selected + '>' + year + '년</option>';
+            }).join('');
+            let rowsHtml = '';
+            if (currentCancelData.length === 0) {
+                rowsHtml = '<tr><td colspan="' + (cancellationColumns.length + 1) + '" class="text-center py-8 text-gray-500"><div class="text-4xl mb-2">🚫</div><div>취소 데이터가 없습니다</div></td></tr>';
+            } else {
+                currentCancelData.forEach(function(row, idx) {
+                    const cellsHtml = cancellationColumns.map(function(col) {
+                        const val = row[col] || '-';
+                        return '<td class="border px-2 py-1 text-sm"><div class="truncate" title="' + val + '">' + val + '</div></td>';
+                    }).join('');
+                    rowsHtml += '<tr class="hover:bg-gray-50"><td class="border px-2 py-1 text-center">' + (idx + 1) + '</td>' + cellsHtml + '</tr>';
+                });
+            }
+            return '<div>' +
+                '<div class="bg-orange-50 border border-orange-300 rounded-lg p-4 mb-4">' +
+                    '<h2 class="text-xl font-bold text-orange-800 flex items-center gap-2"><span>🚫</span> 취소대장: ' + state.targetYear + '년</h2>' +
+                    '<p class="text-sm text-orange-600 mt-1">총 ' + currentCancelData.length + '건</p>' +
+                '</div>' +
+                '<div class="bg-white rounded-lg p-4 mb-4 shadow">' +
+                    '<div class="flex gap-4 items-center mb-4">' +
+                        '<div><label class="block text-sm font-semibold mb-1">해당년도</label><select id="cancelTargetYearSelect" class="px-3 py-2 border rounded">' + yearOptionsHtml + '</select></div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="bg-white rounded-lg shadow overflow-hidden">' +
+                    '<div class="overflow-x-auto" style="max-height: 600px;">' +
+                        '<table class="w-full border-collapse text-sm" style="table-layout: fixed; min-width: 1400px;">' +
+                            '<thead class="bg-orange-600 text-white sticky top-0 z-10">' +
+                                '<tr><th class="border px-2 py-2" style="width: 50px;">No</th>' + cancelColsHtml + '</tr>' +
+                            '</thead>' +
+                            '<tbody>' + rowsHtml + '</tbody>' +
+                        '</table>' +
+                    '</div>' +
+                    '<div class="flex items-center justify-between px-4 py-3 border-t bg-gray-50"><div class="text-sm text-gray-600">전체 ' + currentCancelData.length + '건</div></div>' +
+                '</div>' +
+            '</div>';
         }
 
         function renderFooter() {
@@ -2064,7 +2110,6 @@
     </script>
 </body>
 </html>
-
 
 
 
