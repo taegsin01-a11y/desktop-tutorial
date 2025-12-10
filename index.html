@@ -1586,8 +1586,7 @@ ${applicationColumns.map((col, colIdx) => `
                 return '<td class="border px-2 py-1 text-sm"><div class="truncate" title="' + val + '">' + val + '</div></td>';
             }).join('');
             const isSelected = state.selectedCancellationRows.has(idx);
-            rowsHtml += '<tr class="' + (isSelected ? 'bg-yellow-100' : 'hover:bg-gray-50') + '">
-                <td class="border px-2 py-1 text-center"><input type="checkbox" class="cancel-row-checkbox" data-idx="' + idx + '" ' + (isSelected ? 'checked' : '') + ' /></td><td class="border px-2 py-1 text-center">' + (idx + 1) + '</td>' + cellsHtml + '</tr>';
+            rowsHtml += '<tr class="' + (isSelected ? 'bg-yellow-100' : 'hover:bg-gray-50') + '"> <td class="border px-2 py-1 text-center"><input type="checkbox" class="cancel-row-checkbox" data-idx="' + idx + '" ' + (isSelected ? 'checked' : '') + ' /></td><td class="border px-2 py-1 text-center">' + (idx + 1) + '</td>' + cellsHtml + '</tr>';
         });
     }
     return '<div>' +
@@ -2144,6 +2143,7 @@ ${applicationColumns.map((col, colIdx) => `
     </script>
 </body>
 </html>
+
 
 
 
