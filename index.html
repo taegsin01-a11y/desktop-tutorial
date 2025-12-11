@@ -23,28 +23,63 @@
         .no-cell:hover { background-color: #dbeafe !important; }
         th { resize: horizontal; overflow: hidden; min-width: 50px; }
         td { overflow: hidden; text-overflow: ellipsis; }
-        @media print {
-            body * { visibility: hidden; }
-            .fixed.inset-0 { position: absolute; top: 0; left: 0; visibility: visible; padding: 0 !important; background: white !important; }
-            .fixed.inset-0 * { visibility: visible; }
-            .fixed.inset-0 > div { width: 100% !important; height: 100vh !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
-            #mapContainer { height: calc(100vh - 80px) !important; flex: 1 !important; }
-            #mapLoadingBar { display: none !important; }
-            .p-2.bg-gray-50 { padding: 2px !important; max-height: 50px !important; }
-            .flex.gap-2.justify-end { display: none !important; }
-            #mapFacilityOverlay { display: block !important; }
-            @page { size: A4; margin: 0; }
-        }
-    </style>
-</head>
-<body class="bg-gradient-to-b from-sky-400 to-sky-200 min-h-screen">
-    <div id="app"></div>
+       @media print {
+                body * { visibility: hidden; }
+                #certificatePrintArea, #certificatePrintArea * { 
+                    visibility: visible !important; 
+                }
+                #certificatePrintArea {
+                position: absolute;
+                top: 12mm;
+                left: 10mm;
+                width: 190mm !important;
+               min-height: 260mm !important;
+                padding: 7mm 18mm 15mm 18mm
+                margin: 0 !important;
+                border: 3px solid #000 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                background: white !important;
+            }
+                .fixed.inset-0 { 
+                    position: absolute; 
+                    top: 0; 
+                    left: 0; 
+                    visibility: visible; 
+                    padding: 0 !important; 
+                    background: white !important; 
+                }
+                .fixed.inset-0 * { visibility: visible; }
+                .fixed.inset-0 > div { 
+                    width: 100% !important; 
+                    height: 100vh !important; 
+                    max-width: 100% !important; 
+                    margin: 0 !important; 
+                    padding: 0 !important; 
+                    box-shadow: none !important; 
+                    border-radius: 0 !important; 
+                }
+                #mapContainer { height: calc(100vh - 80px) !important; flex: 1 !important; }
+                #mapLoadingBar { display: none !important; }
+                .p-2.bg-gray-50 { padding: 2px !important; max-height: 50px !important; }
+                .flex.gap-2.justify-end { display: none !important; }
+                #mapFacilityOverlay { display: block !important; }
+                .print\\:hidden { display: none !important; }
+                @page { size: A4; margin: 0; }
+            }
+                    @media print {
+                        .print\\:hidden { display: none !important; }
+                    }
+                </style>
+            </head>
+            <body class="bg-gradient-to-b from-sky-400 to-sky-200 min-h-screen">
+                <div id="app"></div>
 
-    <script>
-        const GOOGLE_CONFIG = {
-            SPREADSHEET_ID: '1s_rI5f5rb65o0sDW7KMDGbPSuHc0jJ-mwlT-ZDZ3Imo',
-            WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyyJdTWamI83Bet-w07pGIWh26rn_4NrrW15Bi2HfsYxV62sQHxuSr8HcXf7LZ9SaxQ8Q/exec'
-        };
+                <script>
+                    const GOOGLE_CONFIG = {
+                        SPREADSHEET_ID: '1s_rI5f5rb65o0sDW7KMDGbPSuHc0jJ-mwlT-ZDZ3Imo',
+                        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyyJdTWamI83Bet-w07pGIWh26rn_4NrrW15Bi2HfsYxV62sQHxuSr8HcXf7LZ9SaxQ8Q/exec'
+                    };
 
             const state = {
             currentYear: new Date().getFullYear(),
@@ -138,7 +173,11 @@
             },
             pathway: { searchTerm: '', selectedRows: new Set(), isEditing: false, currentPage: 1, filters: { region: '' }, showDownloadMenu: false },
             resource: { files: [], selectedFiles: new Set(), currentFolder: '', searchTerm: '', fileStorage: {} },
-            salesUnlocked: false,            resourceUnlocked: false
+            salesUnlocked: false,
+            resourceUnlocked: false,
+            showCertificateModal: false,
+            showCertSaveMenu: false,
+            certificateData: {}
             };
                     
         const columns = ['시설번호', '시설명', '행정구역', '새주소', '구주소', '사용량', '전화번호', '기준일', '안전관리자명', '자격증번호', '보험사', '보험만기일', '메모', '사업자번호', '대표자명', '업태', '종목', '이메일', '면제대상', '검사이력'];
@@ -814,7 +853,7 @@
 
         function renderMapModal() {
             return `
-                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-auto p-4">
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-auto p-4 pt-8">
                     <div class="bg-white rounded-lg shadow-2xl my-8" style="width: 210mm; max-width: 210mm; height: 297mm; display: flex; flex-direction: column; overflow: hidden;">
                         <div class="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
                             <h3 class="text-2xl font-bold">🗺️ 시설 위치 지도</h3>
@@ -987,6 +1026,149 @@
             `;
         }
 
+        
+        function renderCertificateModal() {
+    const d = state.certificateData;
+    const formatInspDate = (dateStr) => { 
+        if (!dateStr) return '____년 __월 __일'; 
+        const parts = dateStr.split('-'); 
+        return parts[0] + '년 ' + parseInt(parts[1]) + '월 ' + parseInt(parts[2]) + '일'; 
+    };
+    const formatCertNumber = (certNum) => {
+        if (!certNum) return '';
+        if (certNum.includes('-')) {
+            const parts = certNum.split('-');
+            if (parts[0].startsWith('KGT')) {
+                const numPart = parts[0].replace('KGT', '');
+                const year = '20' + numPart.substring(0, 2);
+                const monthDay = numPart.substring(2);
+                const seq = parts[1] ? parts[1].replace(/^0+/, '') : '';
+                return `KGT - ${year}${monthDay} - ${seq.padStart(2, '0')}`;
+            }
+        }
+        return certNum;
+    };
+    const sealImage = 'data:image/webp;base64,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';
+    return `
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-auto p-4 pt-8 print:p-0 print:pt-0 print:bg-white">
+            <div class="bg-white shadow-2xl print:shadow-none" style="width: 210mm; min-height: 297mm;">
+                <div id="certificatePrintArea" style="width: 190mm; margin: 12mm auto 10mm auto; padding: 3mm 12mm 3mm 12mm; box-sizing: border-box; font-family: '맑은 고딕', 'Malgun Gothic', sans-serif; background: #fff; border: 3px solid #000;">
+                    <div style="display: flex; justify-content: flex-end; margin-top: -3mm; margin-bottom: 2mm;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 14px; font-weight: bold;">시설번호</span>
+                            <span style="font-size: 14px; font-weight: bold; min-width: 150px; text-align: center;">${d['시설번호'] || ''}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 법령 정보 -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4mm;">
+                        <div style="font-size: 11px; color: #000; font-weight: bold;">■ 도시가스사업법 시행규칙 [별지 제22호의2서식] &lt;개정 2012.10.5&gt;</div>
+                        <div style="font-size: 12px; font-weight: bold;">(앞 쪽)</div>
+                    </div>
+                    
+                    <!-- 제 호 / 기준일 -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8mm;">
+                        <div style="display: flex; align-items: center;">
+                            <span style="font-size: 14px; font-weight: bold;">제</span>
+                            <span style="font-size: 14px; font-weight: bold; margin: 0 5px; padding: 3px 10px; border-bottom: 2px solid #000; min-width: 180px; text-align: center;">${formatCertNumber(d['필증번호'])}</span>
+                            <span style="font-size: 14px; font-weight: bold;">호</span>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <span style="font-size: 14px; font-weight: bold; margin-right: 8px;">기준일</span>
+                            <span style="font-size: 14px; font-weight: bold; padding: 3px 10px; border-bottom: 2px solid #000; min-width: 120px; text-align: center;">${d['기준일'] || ''}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 제목 -->
+                    <h1 style="text-align: center; font-size: 36px; font-weight: bold; margin: 6mm 0; letter-spacing: 10px; color: #000;">정기검사증명서</h1>
+                    
+                    <!-- 메인 테이블 -->
+                    <table style="width: 100%; border-collapse: collapse; border: 2px solid #000;">
+                        <tr>
+                            <td style="border: 1px solid #000; width: 18%; text-align: center; padding: 12px 5px; font-size: 14px; font-weight: bold; background: #f8f8f8;">상 호</td>
+                            <td style="border: 1px solid #000; width: 37%; text-align: center; padding: 12px 5px; font-size: 14px; font-weight: bold;">${d['시설명'] || ''}</td>
+                            <td style="border: 1px solid #000; width: 15%; text-align: center; padding: 12px 5px; font-size: 14px; font-weight: bold; background: #f8f8f8;">사업의 종류</td>
+                            <td style="border: 1px solid #000; width: 30%; text-align: center; padding: 12px 5px; font-size: 14px;">특정사용</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px; font-weight: bold; background: #f8f8f8;">사무소 소재지</td>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 13px;">${d['구주소'] || ''}</td>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px; font-weight: bold; background: #f8f8f8;">성명(대표자)</td>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px;">${d['대표자명'] || ''}</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px; font-weight: bold; background: #f8f8f8;">사업소 소재지</td>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 12px;" colspan="3">${d['새주소'] || ''}</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px; font-weight: bold; background: #f8f8f8;" rowspan="2">검사기관 주소</td>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 12px;" rowspan="2">부산광역시 해운대구 선수촌로 169-8</td>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px; font-weight: bold; background: #f8f8f8;">담 당 부 서</td>
+                            <td style="border: 1px solid #000; text-align: right; padding: 12px 10px; font-size: 13px;">안전 검사팀</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px; font-weight: bold; background: #f8f8f8;"></td>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px;"><span style="font-size: 16px;">☎</span> 051) 784 - 8848</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px; font-weight: bold; background: #f8f8f8;">검 사 원 성 명</td>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px;">${d['검사원'] || ''}</td>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px; font-weight: bold; background: #f8f8f8;">검사 연월일</td>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px;">${formatInspDate(d['검사일'])}</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px; font-weight: bold; background: #f8f8f8;">월사용예정량</td>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px;">${d['사용량'] || ''} M<sup>3</sup></td>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px; font-weight: bold; background: #f8f8f8;">전화번호</td>
+                            <td style="border: 1px solid #000; text-align: center; padding: 12px 5px; font-size: 14px;">${d['전화번호'] || ''}</td>
+                        </tr>
+                    </table>
+                    
+                    <!-- 법적 문구 -->
+                    <div style="margin-top: 12mm; padding: 8mm 5mm; text-align: center; font-size: 15px; line-height: 2.2;">
+                        「도시가스사업법」 제17조제1항 및 같은 법 시행규칙 제25조제7항에 따라<br>
+                        특정가스사용시설에 대하여 정기검사를 마쳤으므로 정기검사증명서를 발급합니다.
+                    </div>
+                    
+                    <!-- KGT 워터마크 로고 -->
+                    <div style="position: relative; margin-top: 6mm; text-align: center; height: 70px;">
+                        <div style="font-size: 75px; font-weight: bold; color: rgba(180, 180, 180, 0.35); font-family: Arial, sans-serif; letter-spacing: 25px;">K G T</div>
+                    </div>
+                    
+                    <!-- 하단 서명 영역 -->
+                    <div style="margin-top: 4mm; text-align: center; position: relative;">
+                        <div style="display: inline-flex; align-items: center; gap: 15px;">
+                            <span style="font-size: 22px; font-weight: bold; letter-spacing: 3px;">한국가스기술 대표이사</span>
+                            <img src="${sealImage}" alt="직인" style="width: 65px; height: 65px; vertical-align: middle;" />
+                        </div>
+                        <div style="margin-top: 2mm; font-size: 15px;">051) 784 - 8848</div>
+                    </div>
+                    
+                    <!-- 하단 연락처 -->
+                   <div style="margin-top: 2mm; text-align: center; font-size: 13px; padding-top: 1mm;">
+                    FAX : 051 - 793 - 0665 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; E-MAIL : bskgt@naver.com
+                </div>
+                </div>
+                
+                <!-- 버튼 영역 -->
+                <div class="flex gap-3 justify-center py-4 bg-gray-100 border-t print:hidden">
+                    <button id="certPrintBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">🖨️ 인쇄</button>
+                    <div class="relative">
+                        <button id="certSaveBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold">💾 저장</button>
+                        ${state.showCertSaveMenu ? `
+                            <div class="absolute bottom-full mb-2 left-0 bg-white border rounded shadow-lg z-30 w-48">
+                                <button id="certSaveExcelBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left text-gray-800">📊 Excel로 저장</button>
+                                <button id="certSaveCSVBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left border-t text-gray-800">📄 CSV로 저장</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <button id="certCloseBtn" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold">닫기</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
         function initMap(locations) {
             const mapContainer = document.getElementById('mapContainer');
             if (!mapContainer || typeof kakao === 'undefined') { setTimeout(() => initMap(locations), 500); return; }
@@ -1138,6 +1320,7 @@
                     ${state.showDetailModal ? renderDetailModal() : ''}
                     ${state.showAppDetailModal ? renderAppDetailModal() : ''}
                     ${state.showMapModal ? renderMapModal() : ''}
+                    ${state.showCertificateModal ? renderCertificateModal() : ''}
                 </div>
             `;
         }
@@ -1454,7 +1637,9 @@
                             <button id="cutBtn" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">✂️ 내년으로</button>
                             <button id="cancelBtn" class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">취소</button>
                             <button id="appDetailBtn" class="px-4 py-2 bg-pink-600 text-white rounded hover:bg-pink-700">👁️ 상세보기</button>
-                        </div>
+                            <button id="certificateBtn" class="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">📜 증명서</button>
+                            <button id="inspectionSheetBtn" class="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">📋 검사표</button>
+                                   </div>
                         <div class="grid grid-cols-4 gap-4 mb-4">
                             <div><label class="block text-sm font-semibold mb-1">행정구역</label><select id="appRegionFilter" class="w-full px-3 py-2 border rounded text-sm"><option value="">전체</option>${uniqueAppRegions.map(r => `<option value="${r}" ${state.applicationFilters.region.includes(r) ? 'selected' : ''}>${r}</option>`).join('')}</select></div>
                             <div><label class="block text-sm font-semibold mb-1">검사원</label><select id="appInspectorFilter" class="w-full px-3 py-2 border rounded text-sm"><option value="">선택</option>${state.inspectors.map(i => `<option value="${i}" ${state.applicationFilters.inspector === i ? 'selected' : ''}>${i}</option>`).join('')}</select></div>
@@ -1586,7 +1771,7 @@ ${applicationColumns.map((col, colIdx) => `
                 return '<td class="border px-2 py-1 text-sm"><div class="truncate" title="' + val + '">' + val + '</div></td>';
             }).join('');
             const isSelected = state.selectedCancellationRows.has(idx);
-            rowsHtml += '<tr class="' + (isSelected ? 'bg-yellow-100' : 'hover:bg-gray-50') + '"> <td class="border px-2 py-1 text-center"><input type="checkbox" class="cancel-row-checkbox" data-idx="' + idx + '" ' + (isSelected ? 'checked' : '') + ' /></td><td class="border px-2 py-1 text-center">' + (idx + 1) + '</td>' + cellsHtml + '</tr>';
+            rowsHtml += '<tr class="' + (isSelected ? 'bg-yellow-100' : 'hover:bg-gray-50') + '"><td class="border px-2 py-1 text-center"><input type="checkbox" class="cancel-row-checkbox" data-idx="' + idx + '" ' + (isSelected ? 'checked' : '') + ' /></td><td class="border px-2 py-1 text-center">' + (idx + 1) + '</td>' + cellsHtml + '</tr>';
         });
     }
     return '<div>' +
@@ -1963,7 +2148,78 @@ ${applicationColumns.map((col, colIdx) => `
                 if (appMapBtn) appMapBtn.addEventListener('click', () => { const currentAppData = state.applicationData[state.targetYear] || []; const selectedData = state.selectedApplicationRows.size > 0 ? currentAppData.filter((_, idx) => state.selectedApplicationRows.has(idx)) : []; if (selectedData.length === 0) { alert('지도에 표시할 행을 선택해주세요.'); return; } state.mapData = selectedData; state.showMapModal = true; state.isLoadingMap = true; state.mapLoadingProgress = 0; render(); setTimeout(() => initMap(selectedData), 100); });
                 const appDetailBtn = document.getElementById('appDetailBtn');
                 if (appDetailBtn) appDetailBtn.addEventListener('click', openAppDetailModal);
-                const appSearchBtn = document.getElementById('appSearchBtn');
+                const certificateBtn = document.getElementById('certificateBtn');
+                if (certificateBtn) certificateBtn.addEventListener('click', () => { if (state.selectedApplicationRows.size !== 1) { alert('증명서를 출력할 데이터를 1개만 선택해주세요.'); return; } const selectedIdx = Array.from(state.selectedApplicationRows)[0]; const currentAppData = state.applicationData[state.targetYear] || []; state.certificateData = {...currentAppData[selectedIdx]}; state.showCertificateModal = true; render(); });
+                const inspectionSheetBtn = document.getElementById('inspectionSheetBtn');
+                if (inspectionSheetBtn) { const inspSheetInput = document.createElement('input'); inspSheetInput.type = 'file'; inspSheetInput.accept = '.csv,.xlsx,.xls'; inspectionSheetBtn.addEventListener('click', () => inspSheetInput.click()); inspSheetInput.addEventListener('change', (e) => { if (e.target.files[0]) { alert('검사표 파일: ' + e.target.files[0].name + ' 선택됨'); e.target.value = ''; } }); }
+                // 증명서 모달 이벤트
+                const certPrintBtn = document.getElementById('certPrintBtn');
+                if (certPrintBtn) certPrintBtn.addEventListener('click', () => window.print());
+
+                const certSaveBtn = document.getElementById('certSaveBtn');
+                if (certSaveBtn) certSaveBtn.addEventListener('click', () => { 
+                    state.showCertSaveMenu = !state.showCertSaveMenu; 
+                    render(); 
+                });
+
+                const certSaveExcelBtn = document.getElementById('certSaveExcelBtn');
+                if (certSaveExcelBtn) certSaveExcelBtn.addEventListener('click', () => {
+                    const d = state.certificateData;
+                    const certData = [{
+                        '시설번호': d['시설번호'] || '',
+                        '필증번호': d['필증번호'] || '',
+                        '기준일': d['기준일'] || '',
+                        '상호': d['시설명'] || '',
+                        '사업의종류': '특정사용',
+                        '사무소소재지': d['구주소'] || '',
+                        '대표자': d['대표자명'] || '',
+                        '사업소소재지': d['새주소'] || '',
+                        '검사기관주소': '부산광역시 해운대구 선수촌로 169-8',
+                        '담당부서': '안전 검사팀',
+                        '전화번호': '051-784-8848',
+                        '검사원성명': d['검사원'] || '',
+                        '검사연월일': d['검사일'] || '',
+                        '월사용예정량': d['사용량'] || '',
+                        '시설전화번호': d['전화번호'] || ''
+                    }];
+                    const worksheet = XLSX.utils.json_to_sheet(certData);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, '정기검사증명서');
+                    XLSX.writeFile(workbook, `정기검사증명서_${d['시설명'] || '미지정'}_${new Date().toISOString().split('T')[0]}.xlsx`);
+                    state.showCertSaveMenu = false;
+                    render();
+                });
+
+                const certSaveCSVBtn = document.getElementById('certSaveCSVBtn');
+                if (certSaveCSVBtn) certSaveCSVBtn.addEventListener('click', () => {
+                    const d = state.certificateData;
+                    const headers = ['시설번호', '필증번호', '기준일', '상호', '사업의종류', '사무소소재지', '대표자', '사업소소재지', '검사기관주소', '담당부서', '전화번호', '검사원성명', '검사연월일', '월사용예정량', '시설전화번호'];
+                    const values = [
+                        d['시설번호'] || '', d['필증번호'] || '', d['기준일'] || '', d['시설명'] || '', '특정사용',
+                        d['구주소'] || '', d['대표자명'] || '', d['새주소'] || '', '부산광역시 해운대구 선수촌로 169-8',
+                        '안전 검사팀', '051-784-8848', d['검사원'] || '', d['검사일'] || '', d['사용량'] || '', d['전화번호'] || ''
+                    ];
+                    const csvContent = [
+                        headers.join(','),
+                        values.map(v => v.includes(',') || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v).join(',')
+                    ].join('\n');
+                    const BOM = '\uFEFF';
+                    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `정기검사증명서_${d['시설명'] || '미지정'}_${new Date().toISOString().split('T')[0]}.csv`;
+                    link.click();
+                    state.showCertSaveMenu = false;
+                    render();
+                });
+
+                const certCloseBtn = document.getElementById('certCloseBtn');
+                if (certCloseBtn) certCloseBtn.addEventListener('click', () => { 
+                    state.showCertificateModal = false; 
+                    state.showCertSaveMenu = false;
+                    render(); 
+                });
+                                const appSearchBtn = document.getElementById('appSearchBtn');
                 if (appSearchBtn) appSearchBtn.addEventListener('click', () => { const searchInput = document.getElementById('appSearchInput'); if (searchInput) state.applicationSearchTerm = searchInput.value; state.currentApplicationPage = 1; render(); });
                 const appSearchInput = document.getElementById('appSearchInput');
                 if (appSearchInput) appSearchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { state.applicationSearchTerm = e.target.value; state.currentApplicationPage = 1; render(); } });
@@ -2143,7 +2399,6 @@ ${applicationColumns.map((col, colIdx) => `
     </script>
 </body>
 </html>
-
 
 
 
