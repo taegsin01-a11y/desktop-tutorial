@@ -13,6 +13,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=c8f5719a2be48f3875087006ce782934&libraries=services&autoload=false"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+   
+    <style>
    
     <style>
         .scroll-x-auto { -webkit-overflow-scrolling: touch; }
@@ -1155,12 +1159,13 @@
                     <button id="certPrintBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">🖨️ 인쇄</button>
                     <div class="relative">
                         <button id="certSaveBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold">💾 저장</button>
-                        ${state.showCertSaveMenu ? `
-                            <div class="absolute bottom-full mb-2 left-0 bg-white border rounded shadow-lg z-30 w-48">
-                                <button id="certSaveExcelBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left text-gray-800">📊 Excel로 저장</button>
-                                <button id="certSaveCSVBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left border-t text-gray-800">📄 CSV로 저장</button>
-                            </div>
-                        ` : ''}
+                     ${state.showCertSaveMenu ? `
+                    <div class="absolute bottom-full mb-2 left-0 bg-white border rounded shadow-lg z-30 w-48">
+                        <button id="certSavePDFBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left text-gray-800">📕 PDF로 저장</button>
+                        <button id="certSaveExcelBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left border-t text-gray-800">📊 Excel로 저장</button>
+                        <button id="certSaveCSVBtn" class="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-100 text-left border-t text-gray-800">📄 CSV로 저장</button>
+                    </div>
+                ` : ''}   
                     </div>
                     <button id="certCloseBtn" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold">닫기</button>
                 </div>
@@ -2155,14 +2160,39 @@ ${applicationColumns.map((col, colIdx) => `
                 // 증명서 모달 이벤트
                 const certPrintBtn = document.getElementById('certPrintBtn');
                 if (certPrintBtn) certPrintBtn.addEventListener('click', () => window.print());
+const certSaveBtn = document.getElementById('certSaveBtn');
+if (certSaveBtn) certSaveBtn.addEventListener('click', () => { 
+    state.showCertSaveMenu = !state.showCertSaveMenu; 
+    render(); 
+});
 
-                const certSaveBtn = document.getElementById('certSaveBtn');
-                if (certSaveBtn) certSaveBtn.addEventListener('click', () => { 
-                    state.showCertSaveMenu = !state.showCertSaveMenu; 
-                    render(); 
-                });
+const certSavePDFBtn = document.getElementById('certSavePDFBtn');
+if (certSavePDFBtn) certSavePDFBtn.addEventListener('click', async () => {
+    const d = state.certificateData;
+    const element = document.getElementById('certificatePrintArea');
+    if (!element) { alert('증명서 영역을 찾을 수 없습니다.'); return; }
+    try {
+        const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = 210;
+        const pdfHeight = 297;
+        const imgWidth = pdfWidth - 20;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const xPos = 10;
+        const yPos = 10;
+        pdf.addImage(imgData, 'PNG', xPos, yPos, imgWidth, imgHeight);
+        pdf.save(`정기검사증명서_${d['시설명'] || '미지정'}_${new Date().toISOString().split('T')[0]}.pdf`);
+        state.showCertSaveMenu = false;
+        render();
+    } catch (error) {
+        console.error('PDF 저장 오류:', error);
+        alert('PDF 저장 중 오류가 발생했습니다.');
+    }
+});
 
-                const certSaveExcelBtn = document.getElementById('certSaveExcelBtn');
+const certSaveExcelBtn = document.getElementById('certSaveExcelBtn');
                 if (certSaveExcelBtn) certSaveExcelBtn.addEventListener('click', () => {
                     const d = state.certificateData;
                     const certData = [{
