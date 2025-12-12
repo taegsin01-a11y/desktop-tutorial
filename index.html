@@ -72,25 +72,46 @@
                 @page { size: A4; margin: 0; }
             }
                   
-                    @media print {
-                        #inspectionSheetPrintArea { 
-                            position: absolute !important; 
-                            top: 0 !important; 
-                            left: 0 !important; 
-                        }
-                        #inspectionSheetPrintArea .insp-page { 
-                            width: 210mm !important; 
-                            min-height: 297mm !important; 
-                            padding: 10mm !important; 
-                            margin: 0 !important; 
-                            page-break-after: always !important; 
-                            -webkit-print-color-adjust: exact !important; 
-                            print-color-adjust: exact !important; 
-                        }
-                        #inspectionSheetPrintArea .insp-page:last-child { 
-                            page-break-after: avoid !important; 
-                        }
-                    }  
+                  @media print {
+    body * {
+        visibility: hidden;
+    }
+    #inspectionSheetPrintArea,
+    #inspectionSheetPrintArea * { 
+        visibility: visible !important; 
+    }
+    #inspectionSheetPrintArea { 
+        position: absolute !important; 
+        top: 0 !important; 
+        left: 0 !important;
+        width: 210mm !important;
+        overflow: visible !important;
+    }
+    #inspectionSheetPrintArea .insp-page { 
+        position: relative !important;
+        width: 210mm !important; 
+        height: 297mm !important; 
+        padding: 2mm 10mm 8mm 10mm !important; 
+        margin: 0 !important;
+        overflow: visible !important;
+        page-break-after: always !important;
+        page-break-inside: avoid !important;
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important; 
+    }
+    #inspectionSheetPrintArea .insp-page:last-child { 
+        page-break-after: avoid !important; 
+    }
+    .fixed.inset-0 {
+        position: absolute !important;
+        overflow: visible !important;
+        height: auto !important;
+    }
+}
+                        size: A4;
+                        margin: 0;
+                    }
+                }   
                 </style>
             </head>
             <body class="bg-gradient-to-b from-sky-400 to-sky-200 min-h-screen">
@@ -1192,12 +1213,13 @@
         </div>
     `;
 }
-
+       
+         
         function renderInspectionSheetModal() {
     const d = state.inspectionSheetData;
     return `
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-auto p-2 print:p-0 print:bg-white">
-            <div class="bg-white shadow-2xl print:shadow-none" style="width: 210mm; max-width: 210mm;">
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-auto p-2 print:p-0 print:bg-white print:overflow-visible">
+    <div class="bg-white shadow-2xl print:shadow-none" style="width: 210mm; max-width: 210mm; overflow: visible;">
                 <!-- 버튼 영역 -->
                 <div class="flex gap-3 justify-center py-3 bg-gray-100 border-b print:hidden sticky top-0 z-10">
                     <button id="inspSheetPrintBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">🖨️ 인쇄</button>
@@ -1205,37 +1227,37 @@
                 </div>
                 
                 <!-- 검사표 내용 -->
-                <div id="inspectionSheetPrintArea" style="font-family: '맑은 고딕', 'Malgun Gothic', sans-serif;">
+                <div id="inspectionSheetPrintArea" style="font-family: '맑은 고딕', 'Malgun Gothic', sans-serif; overflow: visible;">
                     
                     <!-- 1페이지 -->
-                    <div class="insp-page" style="width: 210mm; min-height: 297mm; margin: 0 auto; padding: 8mm 10mm; box-sizing: border-box; background: #fff; page-break-after: always;">
+                    <div class="insp-page" style="width: 210mm; height: 297mm; margin: 0 auto; padding: 3mm 10mm; box-sizing: border-box; background: #fff; page-break-after: always;">
                         <!-- 상단 헤더 -->
-                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 3mm;">
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 2mm;">
                             <tr>
-                                <td style="width: 50%; font-size: 13px; font-weight: bold;">${d['필증번호'] || ''}</td>
+                                <td style="width: 50%; font-size: 12px; font-weight: bold;">${d['필증번호'] || ''}</td>
                                 <td style="width: 50%; text-align: right;">
                                     <span style="font-size: 11px;">기준일</span>
-                                    <span style="font-size: 13px; font-weight: bold; margin-left: 10px;">${d['기준일'] || ''}</span>
+                                    <span style="font-size: 12px; font-weight: bold; margin-left: 10px;">${d['기준일'] || ''}</span>
                                 </td>
                             </tr>
                         </table>
                         
                         <!-- 제목 및 결재란 -->
-                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 3mm;">
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 2mm;">
                             <tr>
                                 <td style="vertical-align: middle;">
-                                    <div style="font-size: 22px; font-weight: bold; text-align: center; letter-spacing: 0.1em;">특정가스사용시설 정기검사표</div>
+                                    <div style="font-size: 20px; font-weight: bold; text-align: center; letter-spacing: 0.1em;">특정가스사용시설 정기검사표</div>
                                 </td>
-                                <td style="width: 130px; vertical-align: top;">
+                                <td style="width: 120px; vertical-align: top;">
                                     <table style="border-collapse: collapse; font-size: 9px; float: right;">
                                         <tr>
                                             <td rowspan="2" style="border: 1px solid #000; padding: 2px 4px; background: #f0f0f0; text-align: center; writing-mode: vertical-lr;">결재</td>
-                                            <td style="border: 1px solid #000; padding: 2px 8px; text-align: center; width: 45px;">검사원</td>
-                                            <td style="border: 1px solid #000; padding: 2px 8px; text-align: center; width: 55px;">기술 책임자</td>
+                                            <td style="border: 1px solid #000; padding: 2px 6px; text-align: center; width: 40px;">검사원</td>
+                                            <td style="border: 1px solid #000; padding: 2px 6px; text-align: center; width: 50px;">기술 책임자</td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 1px solid #000; height: 22px;"></td>
-                                            <td style="border: 1px solid #000; height: 22px;"></td>
+                                            <td style="border: 1px solid #000; height: 20px;"></td>
+                                            <td style="border: 1px solid #000; height: 20px;"></td>
                                         </tr>
                                     </table>
                                 </td>
@@ -1243,7 +1265,7 @@
                         </table>
                         
                         <!-- 업소 정보 테이블 -->
-                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 2mm; font-size: 10px;">
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 1mm; font-size: 10px;">
                             <tr>
                                 <td style="border: 1px solid #000; padding: 3px 5px; width: 10%; background: #e8f5e9; font-weight: bold;">시설번호</td>
                                 <td style="border: 1px solid #000; padding: 3px 5px;" colspan="5">${d['시설번호'] || ''}</td>
@@ -1260,7 +1282,7 @@
                                 <td style="border: 1px solid #000; padding: 3px 5px; background: #e8f5e9; font-weight: bold;">소재지</td>
                                 <td style="border: 1px solid #000; padding: 3px 5px; font-size: 9px;" colspan="3">${d['행정구역'] || ''} ${d['새주소'] || ''}</td>
                                 <td style="border: 1px solid #000; padding: 3px 5px; background: #e8f5e9; font-weight: bold; font-size: 9px;">(월사용<br>예정량)</td>
-                                <td style="border: 1px solid #000; padding: 3px 5px;">${d['사용량'] || ''} m³</td>
+                                <td style="border: 1px solid #000; padding: 3px 5px;">${d['사용량'] || ''} m3</td>
                             </tr>
                             <tr>
                                 <td style="border: 1px solid #000; padding: 3px 5px; background: #e8f5e9; font-weight: bold;">안전관리자</td>
@@ -1278,408 +1300,408 @@
                         </table>
                         
                         <!-- 업소 현황 -->
-                        <div style="text-align: center; font-weight: bold; font-size: 11px; margin: 2mm 0;">[업소 현황]</div>
-                        <div style="text-align: center; font-weight: bold; font-size: 11px; margin-bottom: 2mm;">[검사기준,방법 및 검사결과]</div>
+                        <div style="text-align: center; font-weight: bold; font-size: 10px; margin: 2mm 0;">[업소 현황]</div>
+                        <div style="text-align: center; font-weight: bold; font-size: 10px; margin-bottom: 1mm;">[검사기준,방법 및 검사결과]</div>
                         
                         <!-- 검사 항목 테이블 1페이지 -->
-                        <table style="width: 100%; border-collapse: collapse; font-size: 9px; line-height: 1.3;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 16px; line-height: 1.4;">
                             <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">배치기준 : 도법시행규칙 별표7 제1호 가목1)</td>
-                                <td style="border: 1px solid #000; padding: 3px; width: 35px; text-align: center; font-weight: bold;">판정</td>
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">배치기준 : 도법시행규칙 별표7 제1호 가목1)</td>
+                                <td style="border: 1px solid #000; padding: 2px; width: 30px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; width: 20px; text-align: center;">1.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>가스계량기 설치</u>(화기와 2m이상 이격하고 수시환기 가능한 장소에 설치하되 직사광선 및 빗물을 받는 곳은 격납상자 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; width: 18px; text-align: center;">1.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">가스계량기 설치(화기와 2m이상 이격하고 수시환기 가능한 장소에 설치하되 직사광선 및 빗물을 받는 곳은 격납상자 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">2.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>가스계량기 설치높이</u>(가스계량기(30㎥/hr미만)는바닥에서 1.6m이상 2m 이내에 설치하고 고정장치로 고정, 단, 격납상자 내 설치시 높이제한 없음)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">2.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">가스계량기 설치높이(가스계량기(30㎥/hr미만)는바닥에서 1.6m이상 2m 이내에 설치하고 고정장치로 고정, 단, 격납상자 내 설치시 높이제한 없음)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">3.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>가스계량기와 전기설비와 이격거리</u>(가스계량기와 전기개폐기 60Cm 이상, 단열조치되지 않은 굴뚝, 전기전멸기 및 전기접속기와 30Cm 이상, 비 절연전선과 15Cm 이상 이격여부 확인) 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">3.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">가스계량기와 전기설비와 이격거리(가스계량기와 전기개폐기 60Cm 이상, 단열조치되지 않은 굴뚝, 전기전멸기 및 전기접속기와 30Cm 이상, 비 절연전선과 15Cm 이상 이격여부 확인) 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">4.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>입상관</u>(화기와 2m 이상 유지, 입상관 밸브는 분리가능한 것으로 바닥에서 1.6m 이상 2m 이내 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">가스설비기준: 도법시행규칙 별표7 제1호 가목2)</td>
-                                <td style="border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold;">판정</td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">5.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>지하공급 차단밸브</u>(지하에서 가스를 사용하는 경우 지상에서 차단할 수 있는 장치 설치, 다만, 건물외벽으로 부터 50m 이내 지상차단할 수 있는 장치 설치할 경우 제외) FU551 2.4.1</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">6.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>압력조정기 설치장소</u>(실외에 설치할 것 단, 부득이하여 실내에 설치시 수시로 환기 가능한 장소에 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">7.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>압력조정기 가스방출구</u>(릴리프식 안전장치 내장된 조정기를 건축물내에 설치시 실외의 안전한 장소에 가스 방출구 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">8.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>중간밸브 설치</u>(연소기 각각에 퓨즈콕 설치, 다만, 가스소비량 19,400kcal/h를 초과하는 연소기 연결배관에는 호스콕 또는 배관용밸브 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">9.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>배관용밸브 설치</u>(배관 분기시 주배관에 배관용밸브 설치, 2개이상의 실로 분기시 각 실의 주배관 마다 배관용 밸브 설치, 중간밸브 및 퓨즈콕 등은 사용압력 및 유량에 적합할 것)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">10.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>호스</u>(호스의 길이는 3m 이내, 호스 "T" 연결 불용, 호스의 접속부는 호스밴드 등으로 견고히 조임)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">4.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">입상관(화기와 2m 이상 유지, 입상관 밸브는 분리가능한 것으로 바닥에서 1.6m 이상 2m 이내 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">배관설비기준 : 도법 시행규칙 별표7 제1호 가목 3)</td>
-                                <td style="border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold;">판정</td>
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">가스설비기준: 도법시행규칙 별표7 제1호 가목2)</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">11.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>배관 이음쇠</u>(주조품인 경우 가단주철제이거나 주강제로서 KS 허가제품등 사용)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">5.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">지하공급 차단밸브(지하에서 가스를 사용하는 경우 지상에서 차단할 수 있는 장치 설치, 다만, 건물외벽으로 부터 50m 이내 지상차단할 수 있는 장치 설치할 경우 제외) FU551 2.4.1</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">12.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>지반침하 우려지역</u>(과거 지반침하가 우려되는 곳에는 설치하지 아니하거나, 지반이 약한 곳에 배관이 손상되지 아니하도록 필요한 조치여부 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">6.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">압력조정기 설치장소(실외에 설치할 것 단, 부득이하여 실내에 설치시 수시로 환기 가능한 장소에 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">7.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">압력조정기 가스방출구(릴리프식 안전장치 내장된 조정기를 건축물내에 설치시 실외의 안전한 장소에 가스 방출구 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">8.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">중간밸브 설치(연소기 각각에 퓨즈콕 설치, 다만, 가스소비량 19,400kcal/h를 초과하는 연소기 연결배관에는 호스콕 또는 배관용밸브 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">9.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">배관용밸브 설치(배관 분기시 주배관에 배관용밸브 설치, 2개이상의 실로 분기시 각 실의 주배관 마다 배관용 밸브 설치, 중간밸브 및 퓨즈콕 등은 사용압력 및 유량에 적합할 것)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">10.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">호스(호스의 길이는 3m 이내, 호스 "T" 연결 불용, 호스의 접속부는 호스밴드 등으로 견고히 조임)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr style="background: #fff3e0;">
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">배관설비기준 : 도법 시행규칙 별표7 제1호 가목 3)</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">판정</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">11.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">배관 이음쇠(주조품인 경우 가단주철제이거나 주강제로서 KS 허가제품등 사용)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">12.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">지반침하 우려지역(과거 지반침하가 우려되는 곳에는 설치하지 아니하거나, 지반이 약한 곳에 배관이 손상되지 아니하도록 필요한 조치여부 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                         </table>
                     </div>
                     
                     <!-- 2페이지 -->
-                    <div class="insp-page" style="width: 210mm; min-height: 297mm; margin: 0 auto; padding: 8mm 10mm; box-sizing: border-box; background: #fff; page-break-after: always;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 9px; line-height: 1.3;">
+                    <div class="insp-page" style="width: 210mm; height: 297mm; margin: 0 auto; padding: 8mm 10mm; box-sizing: border-box; background: #fff; page-break-after: always;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.4;">
                             <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">[검사기준,방법 및 검사결과]</td>
-                                <td style="border: 1px solid #000; padding: 3px; width: 35px; text-align: center; font-weight: bold;">판정</td>
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">[검사기준,방법 및 검사결과]</td>
+                                <td style="border: 1px solid #000; padding: 2px; width: 30px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; width: 20px; text-align: center;">13.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>하천 또는 암거내 설치 제한</u>(하천 또는 하수구 등 암거내 설치하지 아니하며 KGS FU551.2.5.4.3기준에 따라 설치여부 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; width: 18px; text-align: center;">13.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">하천 또는 암거내 설치 제한(하천 또는 하수구 등 암거내 설치하지 아니하며 KGS FU551.2.5.4.3기준에 따라 설치여부 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">14.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>건축물내 배관</u>(노출시공, 다만 스테인리스강,금속제의 보호관 또는 보호판으로 보호조치한 동관,가스용금속플렉시블호스 등이(용접이음매를 제외)없이 설치하는 경우는 매설 시공가능)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">14.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">건축물내 배관(노출시공, 다만 스테인리스강,금속제의 보호관 또는 보호판으로 보호조치한 동관,가스용금속플렉시블호스 등이(용접이음매를 제외)없이 설치하는 경우는 매설 시공가능)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">15.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>환기불양장소 설치</u>(스테인리스강관,동관(보호관조치),가스용금속플렉시블호스(금속제 보호관 또는 보호판으로 보호조치)를 이음매 없이 설치 시 천정,벽,바닥에 설치 가능)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">15.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">환기불양장소 설치(스테인리스강관,동관(보호관조치),가스용금속플렉시블호스(금속제 보호관 또는 보호판으로 보호조치)를 이음매 없이 설치 시 천정,벽,바닥에 설치 가능)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">16.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>전기설비와 이격거리</u>(배관이음매(용접이음매 제외)와 전기계량기및 전기개폐기: 60Cm 이상, 단열조치되지 않은 굴뚝, 전기전멸기 및 전기접속기 : 15Cm 이상, 비 절연전선 : 15Cm 이상 유지 여부를 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">16.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">전기설비와 이격거리(배관이음매(용접이음매 제외)와 전기계량기및 전기개폐기: 60Cm 이상, 단열조치되지 않은 굴뚝, 전기전멸기 및 전기접속기 : 15Cm 이상, 비 절연전선 : 15Cm 이상 유지 여부를 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">17.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>배관의 고정</u>(배관은 관경 13㎜미만은 1m마다, 13㎜이상 33㎜미만은 2m 마다, 33㎜이상은 3m마다 고정, 호칭지름 100mm 이상의 것에는 KGS FU551 2.5.4.3.4 에 따라 3m 초과하여 설치 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">17.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">배관의 고정(배관은 관경 13㎜미만은 1m마다, 13㎜이상 33㎜미만은 2m 마다, 33㎜이상은 3m마다 고정, 호칭지름 100mm 이상의 것에는 KGS FU551 2.5.4.3.4 에 따라 3m 초과하여 설치 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">18.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>방호조치등</u>(차량의 통행 그 밖의 충격 등에 의하여 손상될 우려가 있는 곳의 노출된 배관에 대하여 KGS FU551 2.5.4.3.3. 기준에 따라 방호조치, 벽을 통과하는 경우 보호관 및 부식방지 피복여부 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">18.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">방호조치등(차량의 통행 그 밖의 충격 등에 의하여 손상될 우려가 있는 곳의 노출된 배관에 대하여 KGS FU551 2.5.4.3.3. 기준에 따라 방호조치, 벽을 통과하는 경우 보호관 및 부식방지 피복여부 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">19.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>기밀시험</u>(사용압력 이상으로 누출검사 실시)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">19.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">기밀시험(사용압력 이상으로 누출검사 실시)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">20.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>배관 외부의 표시여부 확인</u>(가스명,최고사용압력,가스흐름방향 표시여부 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">20.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">배관 외부의 표시여부 확인(가스명,최고사용압력,가스흐름방향 표시여부 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">21.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>배관의 색상</u>(지상배관:황색, 지하배관:저압(황색),중압(적색)확인,지상배관으로서 바닥에서 1m높이에 폭 3Cm의 이중띠 표시 경우 색상 제한없음)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">사고예방설비기준 : 도법 시행규칙 별표7 제1호 가목4)</td>
-                                <td style="border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold;">판정</td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">22.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>가스누출차단장치 설치</u>(월사용예정량 2천m³ 미만으로 퓨즈콕,상자콕이 설치되어 있고 각 연소기에 소화안전장치가 설치된 경우 제외, 가스누출경보기 연동차단기능의 다기능가스안전계량기 설치할 경우는 제외)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">23.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>경보기 검지부</u>(연소기 버너의 중심부로부터 수평거리 4m 이내(공기보다 가벼운 가스는 8m 이내)에 1개 이상 설치,연소기 설치실이 별도로 구분된 경우 실별로 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">24.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>차단부</u>(차단부는 배관상황에 따라 각각의 주배관에 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">25.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>제어부</u>(연소기 주위에서 조작하기 쉬운 위치에 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">26.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>설치제외대상</u>(가스공급이 불시에 자동차단되므로서 재해 및 손살이 클 우려가 있는 시설 등 KGS FU551 2.8.2.2.3.(4)기준에 따라 적합 여부 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">27.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>부식방지설비</u>(지하에 매설하는 강관에는 부식에 의한 악영향을 방지하기 위하여 KGS GC202(가스시설 전기방식 기준)에 따라 전기부식방지조치 여부 확인 T/B설치 확인: 희생양극법, 배류법: 300m/개소, 외부전원법 : 500m/개소, 방식전위 -0.85V이하)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">21.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">배관의 색상(지상배관:황색, 지하배관:저압(황색),중압(적색)확인,지상배관으로서 바닥에서 1m높이에 폭 3Cm의 이중띠 표시 경우 색상 제한없음)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">단독사용자용정압기 배치기준 : 도법 시행규칙 별표7 제2호 가목 1)</td>
-                                <td style="border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold;">판정</td>
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">사고예방설비기준 : 도법 시행규칙 별표7 제1호 가목4)</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">28.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>설치위치</u>(건축물 내부 또는 기초밑에 설치 불가,(다만, 부득이하게 건축물외부에 설치할 수 없는 경우로서 외부에 환기가 잘 되는 지상층에 설치하거나 외부에 환기가 잘 되고 기계환기설비를 갖춘 지하층에 설치 가능)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">22.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">가스누출차단장치 설치(월사용예정량 2천m³ 미만으로 퓨즈콕,상자콕이 설치되어 있고 각 연소기에 소화안전장치가 설치된 경우 제외, 가스누출경보기 연동차단기능의 다기능가스안전계량기 설치할 경우는 제외)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">23.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">경보기 검지부(연소기 버너의 중심부로부터 수평거리 4m 이내(공기보다 가벼운 가스는 8m 이내)에 1개 이상 설치,연소기 설치실이 별도로 구분된 경우 실별로 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">24.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">차단부(차단부는 배관상황에 따라 각각의 주배관에 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">25.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">제어부(연소기 주위에서 조작하기 쉬운 위치에 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">26.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">설치제외대상(가스공급이 불시에 자동차단되므로서 재해 및 손살이 클 우려가 있는 시설 등 KGS FU551 2.8.2.2.3.(4)기준에 따라 적합 여부 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">27.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">부식방지설비(지하에 매설하는 강관에는 부식에 의한 악영향을 방지하기 위하여 KGS GC202(가스시설 전기방식 기준)에 따라 전기부식방지조치 여부 확인 T/B설치 확인: 희생양극법, 배류법: 300m/개소, 외부전원법 : 500m/개소, 방식전위 -0.85V이하)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">단독사용자용정압기 가스설비기준 : 도법 시행규칙 별표7 제2호 가목 2)</td>
-                                <td style="border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold;">판정</td>
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">단독사용자용정압기 배치기준 : 도법 시행규칙 별표7 제2호 가목 1)</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">29.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>정압기실의 구조 및 재료 등</u>(철근콘크리트 등 불연재료 사용하고, 내부는 그 조작에 필요한 공간 확보)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">28.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">설치위치(건축물 내부 또는 기초밑에 설치 불가,(다만, 부득이하게 건축물외부에 설치할 수 없는 경우로서 외부에 환기가 잘 되는 지상층에 설치하거나 외부에 환기가 잘 되고 기계환기설비를 갖춘 지하층에 설치 가능)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr style="background: #fff3e0;">
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">단독사용자용정압기 가스설비기준 : 도법 시행규칙 별표7 제2호 가목 2)</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">30.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>타시설물 설치금지</u>(정압기실에는 가스공급시설 외의 시설물 설치금지)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">29.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">정압기실의 구조 및 재료 등(철근콘크리트 등 불연재료 사용하고, 내부는 그 조작에 필요한 공간 확보)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">30.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">타시설물 설치금지(정압기실에는 가스공급시설 외의 시설물 설치금지)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                         </table>
                     </div>
                     
                     <!-- 3페이지 -->
-                    <div class="insp-page" style="width: 210mm; min-height: 297mm; margin: 0 auto; padding: 8mm 10mm; box-sizing: border-box; background: #fff; page-break-after: always;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 9px; line-height: 1.3;">
+                    <div class="insp-page" style="width: 210mm; height: 297mm; margin: 0 auto; padding: 8mm 10mm; box-sizing: border-box; background: #fff; page-break-after: always;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.4;">
                             <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">[검사기준,방법 및 검사결과]</td>
-                                <td style="border: 1px solid #000; padding: 3px; width: 35px; text-align: center; font-weight: bold;">판정</td>
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">[검사기준,방법 및 검사결과]</td>
+                                <td style="border: 1px solid #000; padding: 2px; width: 30px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; width: 20px; text-align: center;">31.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>침수방지조치</u>(지하에 설치하는 정압기실은 침수방지조치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; width: 18px; text-align: center;">31.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">침수방지조치(지하에 설치하는 정압기실은 침수방지조치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">32.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>누출검사</u>(사용압력 이상으로 누출검사 실시)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">단독사용자용정압기 사고예방설비기준 : 도법 시행규칙 별표7 제2호 가목 3)</td>
-                                <td style="border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold;">판정</td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">33.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>과압안전장치</u>(정압기에는 안전밸브 및 가스방출관을 설치하고 가스방출관의 방출구는 주위에 불 등이 없는 안전한 위치로서 지면에서 5m 이상의 높이에 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">34.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>가스누출검지통보설비</u>(검지부는 바닥면적 둘레 20m 당 1개 이상의 수량(안전관리자가 상주하는 곳에 통보할 수 있는 설비를 갖추고 정기적으로 점검)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">35.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>경보장치</u>(이상압력 통보설비를 안전관리자가 상주하는 곳에 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">36.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>전기방폭설비</u>(정압기실의 전기설비는 KGS GC201(가스시설 전기방폭 기준)에 따라적합하게 설치 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">37.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>환기설비</u>(통풍구는 바닥면에 접하고 외기에 면하여 설치된 환기구의 통풍 가능면적의 합계가 바닥면적 1m² 마다 300Cm²(철망이 차지하는 면적 제함)의 비율로 계산된 면적이상)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">38.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>불순물제거</u>(정압기 입구에 불순물제거장치 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">39.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>동결방지장치</u>(가스중 수분이 동결로 인해 정압기능을 저해할 우려가 있는 경우 동결방지장치 등 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">32.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">누출검사(사용압력 이상으로 누출검사 실시)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">단독사용자용정압기 피해저감설비기준 : 도법 시행규칙 별표7 제2호 가목 4)</td>
-                                <td style="border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold;">판정</td>
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">단독사용자용정압기 사고예방설비기준 : 도법 시행규칙 별표7 제2호 가목 3)</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">40.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>가스차단장치 설치</u>(정압기의 입구,출구에는 가스차단장치를 설치 여부 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">33.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">과압안전장치(정압기에는 안전밸브 및 가스방출관을 설치하고 가스방출관의 방출구는 주위에 불 등이 없는 안전한 위치로서 지면에서 5m 이상의 높이에 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">41.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>지상차단장치</u>(지하정압기실의 경우 외부에 추가로, 지상차단장치 설치, 정압기실 외벽으로부터 50m이내 가스공급을 지상에서 쉽게 차단할 수 있는 장치를 설치할 경우에는 제외)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">34.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">가스누출검지통보설비(검지부는 바닥면적 둘레 20m 당 1개 이상의 수량(안전관리자가 상주하는 곳에 통보할 수 있는 설비를 갖추고 정기적으로 점검)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">35.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">경보장치(이상압력 통보설비를 안전관리자가 상주하는 곳에 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">36.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">전기방폭설비(정압기실의 전기설비는 KGS GC201(가스시설 전기방폭 기준)에 따라적합하게 설치 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">37.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">환기설비(통풍구는 바닥면에 접하고 외기에 면하여 설치된 환기구의 통풍 가능면적의 합계가 바닥면적 1m² 마다 300Cm²(철망이 차지하는 면적 제함)의 비율로 계산된 면적이상)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">38.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">불순물제거(정압기 입구에 불순물제거장치 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">39.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">동결방지장치(가스중 수분이 동결로 인해 정압기능을 저해할 우려가 있는 경우 동결방지장치 등 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">단독사용자용정압기 부대설비기준 : 도법 시행규칙 별표7 제2호 가목 5), 6)</td>
-                                <td style="border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold;">판정</td>
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">단독사용자용정압기 피해저감설비기준 : 도법 시행규칙 별표7 제2호 가목 4)</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">42.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>바이패스관</u>(정압기에 바이패스관을 설치하는 경우에 밸브설치, 밸브에 잠금조치 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">40.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">가스차단장치 설치(정압기의 입구,출구에는 가스차단장치를 설치 여부 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">43.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>압력기록장치</u>(정압기 출구에 가스압력 측정 기록장치 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">44.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>정압기와 필터 분해점검</u>(최초 3년에 1회 이상&lt;그 이후 4년에 1회이상&gt;분해점검 및 작동상황 점검 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">41.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">지상차단장치(지하정압기실의 경우 외부에 추가로, 지상차단장치 설치, 정압기실 외벽으로부터 50m이내 가스공급을 지상에서 쉽게 차단할 수 있는 장치를 설치할 경우에는 제외)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">연소기 설치기준 : 도법 시행규칙 별표7 제3호</td>
-                                <td style="border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold;">판정</td>
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">단독사용자용정압기 부대설비기준 : 도법 시행규칙 별표7 제2호 가목 5), 6)</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">45.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>가스온수기 또는 가스보일러</u>(가스온수기(보일러) 설치장소,설치방법은 KGS GC 208 2017, KGS GC 209 2017, FU 551 기준에 따라 적합하게 설치여부 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">42.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">바이패스관(정압기에 바이패스관을 설치하는 경우에 밸브설치, 밸브에 잠금조치 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">46.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>개방형연소기 설치실</u>(환풍기나 환기구 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">43.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">압력기록장치(정압기 출구에 가스압력 측정 기록장치 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">47.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>반밀폐형연소기</u>(급기구 및 배기통 설치, 배기통이 가연성 물질의 천정 벽 등 통과시 금속 외의 불연재료로 단열조치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">44.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">정압기와 필터 분해점검(최초 3년에 1회 이상&lt;그 이후 4년에 1회이상&gt;분해점검 및 작동상황 점검 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr style="background: #fff3e0;">
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">연소기 설치기준 : 도법 시행규칙 별표7 제3호</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">48.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>배기통 구조 및 재료</u>(배기통 끝은 배기가 방해받지 않는 구조이고, 배기가 방해받지 않는 위치에 설치 확인, 재료는 스테인리스강판이나 내열,내식성 재료 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">45.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">가스온수기 또는 가스보일러(가스온수기(보일러) 설치장소,설치방법은 KGS GC 208 2017, KGS GC 209 2017, FU 551 기준에 따라 적합하게 설치여부 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">46.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">개방형연소기 설치실(환풍기나 환기구 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">47.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">반밀폐형연소기(급기구 및 배기통 설치, 배기통이 가연성 물질의 천정 벽 등 통과시 금속 외의 불연재료로 단열조치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">48.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">배기통 구조 및 재료(배기통 끝은 배기가 방해받지 않는 구조이고, 배기가 방해받지 않는 위치에 설치 확인, 재료는 스테인리스강판이나 내열,내식성 재료 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                         </table>
                     </div>
                     
-                    <!-- 4페이지 -->
-                    <div class="insp-page" style="width: 210mm; min-height: 297mm; margin: 0 auto; padding: 8mm 10mm; box-sizing: border-box; background: #fff;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 9px; line-height: 1.3;">
+                    <!-- 4페이지 (3/4 크기) -->
+                    <div class="insp-page" style="width: 210mm; height: 223mm; margin: 0 auto; padding: 2mm 10mm 8mm 10mm; box-sizing: border-box; background: #fff;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.4;">
                             <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">[검사기준,방법 및 검사결과]</td>
-                                <td style="border: 1px solid #000; padding: 3px; width: 35px; text-align: center; font-weight: bold;">판정</td>
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">[검사기준,방법 및 검사결과]</td>
+                                <td style="border: 1px solid #000; padding: 2px; width: 30px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; width: 20px; text-align: center;">49.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>밀폐형연소기</u>(급기구, 배기통과 벽과 사이에 배기가스가 실내로 유입되지 않도록 밀폐조치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; width: 18px; text-align: center;">49.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">밀폐형연소기(급기구, 배기통과 벽과 사이에 배기가스가 실내로 유입되지 않도록 밀폐조치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">50.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>배기팬 등</u>(자연배기식 반밀폐형 및 밀폐형연소기의 배기통끝은 배기가 방해되지 아니하는 구조이고 장애물 또는 외기의 흐름으로 배기가 방해받지 아니하는 위치에 설치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">50.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">배기팬 등(자연배기식 반밀폐형 및 밀폐형연소기의 배기통끝은 배기가 방해되지 아니하는 구조이고 장애물 또는 외기의 흐름으로 배기가 방해받지 아니하는 위치에 설치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">51.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>배기팬의 배기가스 접촉부분</u>(밀폐형 또는 반밀폐형 연소기의 배기팬과 배기가스 접촉부분은 불연성 재료)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
-                            </tr>
-                            <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">그 밖의 기준: 도법 : 도법 시행규칙 별표7 제1호 5), 제2호 6) 및 제3호 3)</td>
-                                <td style="border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold;">판정</td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">52.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>가스용품</u>(검사대상에 해당되는 경우 검사합격품 여부 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">51.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">배기팬의 배기가스 접촉부분(밀폐형 또는 반밀폐형 연소기의 배기팬과 배기가스 접촉부분은 불연성 재료)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr style="background: #fff3e0;">
-                                <td style="border: 1px solid #000; padding: 3px 5px; font-weight: bold;" colspan="2">기술 기준: 도법 : 도법 시행규칙 별표7 제1호, 제2호 제3호 나목</td>
-                                <td style="border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold;">판정</td>
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">그 밖의 기준: 도법 : 도법 시행규칙 별표7 제1호 5), 제2호 6) 및 제3호 3)</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">53.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>설비작동상황 점검</u>(가스사용자는 1일1회이상 설비의 작동상황을 점검하고 이상 있을시 즉시 보수 등 필요 조치)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">52.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">가스용품(검사대상에 해당되는 경우 검사합격품 여부 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr style="background: #fff3e0;">
+                                <td style="border: 1px solid #000; padding: 2px 4px; font-weight: bold;" colspan="2">기술 기준: 도법 : 도법 시행규칙 별표7 제1호, 제2호 제3호 나목</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">판정</td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">54.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>가스시설점검</u>(압력조정기는 매 1년에 1회이상 &lt;필터 또는 스트레이너 청소는 3년에 1회(그이후는 4년에 1회 이상)이상&gt; 작동유무 및 안전점검 확인, 정압기와 필터의 경우 설치후 3년 1회 이상(그 이후 4년에 1회 이상)분해점검 실시 및 작동상황을 점검하고 그 시설이나 설비가 정상적으로 작동될 수 있도록 조치 확인, 1주일에 1회 이상 작동상황 점검 확인) FU551 3.3.4, 3.3.6에의한 점검</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">53.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">설비작동상황 점검(가스사용자는 1일1회이상 설비의 작동상황을 점검하고 이상 있을시 즉시 보수 등 필요 조치)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">55.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>가스누출경보기 점검</u>(정압기실에 설치된 가스누출경보기 1주일에 1회이상 작동상황 점검 및 작동이 불량할 때에는 즉시 교체 또는 수리 등 정상적인 작동여부 확인)</td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">54.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">가스시설점검(압력조정기는 매 1년에 1회이상 &lt;필터 또는 스트레이너 청소는 3년에 1회(그이후는 4년에 1회 이상)이상&gt; 작동유무 및 안전점검 확인, 정압기와 필터의 경우 설치후 3년 1회 이상(그 이후 4년에 1회 이상)분해점검 실시 및 작동상황을 점검하고 그 시설이나 설비가 정상적으로 작동될 수 있도록 조치 확인, 1주일에 1회 이상 작동상황 점검 확인) FU551 3.3.4, 3.3.6에의한 점검</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">56.</td>
-                                <td style="border: 1px solid #000; padding: 2px 4px;"><u>CO검지기 설치 여부 확인</u></td>
-                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">55.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">가스누출경보기 점검(정압기실에 설치된 가스누출경보기 1주일에 1회이상 작동상황 점검 및 작동이 불량할 때에는 즉시 교체 또는 수리 등 정상적인 작동여부 확인)</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 1px; text-align: center;">56.</td>
+                                <td style="border: 1px solid #000; padding: 1px 3px;">CO검지기 설치 여부 확인</td>
+                                <td style="border: 1px solid #000; padding: 1px;"></td>
                             </tr>
                         </table>
                         
-                        <div style="margin-top: 3mm; font-size: 9px; color: #333;">*작성방법: 판정란에 적합(○), 부적합(×), 해당없음(/)으로 표기</div>
+                        <div style="margin-top: 2mm; font-size: 16px; color: #333;">*작성방법: 판정란에 적합(○), 부적합(×), 해당없음(/)으로 표기</div>
                         
                         <!-- 검사원 의견 -->
-                        <div style="margin-top: 5mm;">
-                            <div style="font-weight: bold; font-size: 11px; margin-bottom: 2mm;">[검사원 의견등]</div>
-                            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                        <div style="margin-top: 3mm;">
+                            <div style="font-weight: bold; font-size: 14px; margin-bottom: 1mm;">[검사원 의견등]</div>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 16px;">
                                 <tr>
-                                    <td style="border: 1px solid #000; padding: 5px 8px; background: #f5f5f5; font-weight: bold; width: 18%;">고객확인</td>
-                                    <td style="border: 1px solid #000; padding: 5px 8px; height: 25px;"></td>
+                                    <td style="border: 1px solid #000; padding: 4px 6px; background: #f5f5f5; font-weight: bold; width: 18%;">고객확인</td>
+                                    <td style="border: 1px solid #000; padding: 4px 6px; height: 20px;"></td>
                                 </tr>
                                 <tr>
-                                    <td style="border: 1px solid #000; padding: 5px 8px; background: #f5f5f5; font-weight: bold; vertical-align: top;">점검결과 특이사항<br>및 검사원 의견등</td>
-                                    <td style="border: 1px solid #000; padding: 5px 8px; height: 60px;"></td>
+                                    <td style="border: 1px solid #000; padding: 4px 6px; background: #f5f5f5; font-weight: bold; vertical-align: top;">점검결과 특이사항<br>및 검사원 의견등</td>
+                                    <td style="border: 1px solid #000; padding: 4px 6px; height: 50px;"></td>
                                 </tr>
                             </table>
                         </div>
                         
                         <!-- 검사결과 -->
-                        <div style="margin-top: 5mm;">
-                            <div style="font-weight: bold; font-size: 11px; margin-bottom: 2mm;">[검사결과]</div>
-                            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                        <div style="margin-top: 3mm;">
+                            <div style="font-weight: bold; font-size: 14px; margin-bottom: 1mm;">[검사결과]</div>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 16px;">
                                 <tr>
-                                    <td style="border: 1px solid #000; padding: 6px; text-align: center; width: 25%; font-size: 11px;">${d['시설번호'] || ''}</td>
-                                    <td style="border: 1px solid #000; padding: 6px; text-align: center; width: 30%; font-size: 11px;">${d['시설명'] || ''}</td>
-                                    <td style="border: 1px solid #000; padding: 6px;" colspan="2"></td>
+                                    <td style="border: 1px solid #000; padding: 5px; text-align: center; width: 25%; font-size: 14px;">${d['시설번호'] || ''}</td>
+                                    <td style="border: 1px solid #000; padding: 5px; text-align: center; width: 30%; font-size: 14px;">${d['시설명'] || ''}</td>
+                                    <td style="border: 1px solid #000; padding: 5px;" colspan="2"></td>
                                 </tr>
                                 <tr>
-                                    <td style="border: 1px solid #000; padding: 5px 8px; background: #f5f5f5; font-weight: bold; text-align: center;">검사일자</td>
-                                    <td style="border: 1px solid #000; padding: 5px 8px; text-align: center;">${d['검사일'] || ''}</td>
-                                    <td style="border: 1px solid #000; padding: 5px 8px; background: #f5f5f5; font-weight: bold; text-align: center; width: 15%;">검사결과</td>
-                                    <td style="border: 1px solid #000; padding: 5px 8px; text-align: center;">${d['검사결과'] || '적합,부적합'}</td>
+                                    <td style="border: 1px solid #000; padding: 4px 6px; background: #f5f5f5; font-weight: bold; text-align: center;">검사일자</td>
+                                    <td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${d['검사일'] || ''}</td>
+                                    <td style="border: 1px solid #000; padding: 4px 6px; background: #f5f5f5; font-weight: bold; text-align: center; width: 15%;">검사결과</td>
+                                    <td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${d['검사결과'] || '적합,부적합'}</td>
                                 </tr>
                                 <tr>
-                                    <td style="border: 1px solid #000; padding: 5px 8px; background: #f5f5f5; font-weight: bold; text-align: center;">검사자</td>
-                                    <td style="border: 1px solid #000; padding: 5px 8px; text-align: center;">${d['검사원'] || ''}</td>
-                                    <td style="border: 1px solid #000; padding: 5px 8px; text-align: center;">(인)</td>
-                                    <td style="border: 1px solid #000; padding: 5px 8px; text-align: center;">(인)</td>
+                                    <td style="border: 1px solid #000; padding: 4px 6px; background: #f5f5f5; font-weight: bold; text-align: center;">검사자</td>
+                                    <td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${d['검사원'] || ''}</td>
+                                    <td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">(인)</td>
+                                    <td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">(인)</td>
                                 </tr>
                             </table>
                         </div>
@@ -1688,9 +1710,9 @@
             </div>
         </div>
     `;
-}  
+}   
 
-        function initMap(locations) {
+            function initMap(locations) {
             const mapContainer = document.getElementById('mapContainer');
             if (!mapContainer || typeof kakao === 'undefined') { setTimeout(() => initMap(locations), 500); return; }
             kakao.maps.load(function() {
@@ -2672,8 +2694,9 @@ ${applicationColumns.map((col, colIdx) => `
                 if (appDetailBtn) appDetailBtn.addEventListener('click', openAppDetailModal);
                 const certificateBtn = document.getElementById('certificateBtn');
                 if (certificateBtn) certificateBtn.addEventListener('click', () => { if (state.selectedApplicationRows.size !== 1) { alert('증명서를 출력할 데이터를 1개만 선택해주세요.'); return; } const selectedIdx = Array.from(state.selectedApplicationRows)[0]; const currentAppData = state.applicationData[state.targetYear] || []; state.certificateData = {...currentAppData[selectedIdx]}; state.showCertificateModal = true; render(); });
-               const inspectionSheetBtn = document.getElementById('inspectionSheetBtn');
+              const inspectionSheetBtn = document.getElementById('inspectionSheetBtn');
 if (inspectionSheetBtn) inspectionSheetBtn.addEventListener('click', () => { if (state.selectedApplicationRows.size !== 1) { alert('검사표를 출력할 데이터를 1개만 선택해주세요.'); return; } const selectedIdx = Array.from(state.selectedApplicationRows)[0]; const currentAppData = state.applicationData[state.targetYear] || []; state.inspectionSheetData = {...currentAppData[selectedIdx]}; state.showInspectionSheetModal = true; render(); });
+                // 증명서 모달 이벤트 리스너
                 const certPrintBtn = document.getElementById('certPrintBtn');
                 if (certPrintBtn) certPrintBtn.addEventListener('click', () => window.print());
 const certSaveBtn = document.getElementById('certSaveBtn');
@@ -2766,7 +2789,10 @@ const certSaveExcelBtn = document.getElementById('certSaveExcelBtn');
                     render(); 
                 });
                 const inspSheetPrintBtn = document.getElementById('inspSheetPrintBtn');
-                if (inspSheetPrintBtn) inspSheetPrintBtn.addEventListener('click', () => window.print());
+                if (inspSheetPrintBtn) inspSheetPrintBtn.addEventListener('click', () => {
+                    alert('💡 인쇄 설정 안내\\n\\n1. 용지: A4\\n2. 양면 인쇄: 긴 쪽으로 넘김\\n3. 여백: 없음 또는 최소\\n\\n프린터 설정에서 "양면 인쇄"를 선택해주세요.');
+                    window.print();
+                });
                 const inspSheetCloseBtn = document.getElementById('inspSheetCloseBtn');
                 if (inspSheetCloseBtn) inspSheetCloseBtn.addEventListener('click', () => { state.showInspectionSheetModal = false; render(); });
                                 const appSearchBtn = document.getElementById('appSearchBtn');
