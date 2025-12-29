@@ -581,23 +581,7 @@
             render();
         }
 
-        function createSampleData() {
-            const sampleData = [
-                { '시설번호': '00458912-0001', '시설명': '장수마을목욕탕', '행정구역': '부산', '새주소': '부산광역시 기장군 기장읍 교리 334-6번지', '구주소': '', '월사용예정량': '6,334.00㎡', '전화번호': '051-724-2552', '기준일': '2025-02-03', '안전관리자명': '', '자격증번호': '', '보험사': '', '보험만기일': '2028-11-22', '메모': '', '검사일': '2002-01-30', '신청일': '', '검사원': '문서영', '검사결과': '', '필증번호': '', '수수료': '', '접수처': '비대상', '계산서발행일': '', '비고': '', '검사확인': '', '사업자번호': '', '대표자명': '', '업태': '', '종목': '', '이메일': '', '면제대상': '', '검사이력': 'Y' },
-                { '시설번호': '01525996-0001', '시설명': '피플러한의원', '행정구역': '부산', '새주소': '부산광역시 기장군 정관읍 용수리 12 83-3번지', '구주소': '', '월사용예정량': '1,322.00㎡', '전화번호': '051-728-6999', '기준일': '2025-05-07', '안전관리자명': '', '자격증번호': '', '보험사': '', '보험만기일': '', '메모': '', '검사일': '2011-01-05', '신청일': '', '검사원': '', '검사결과': '', '필증번호': '', '수수료': '', '접수처': '비대상', '계산서발행일': '', '비고': '', '검사확인': '', '사업자번호': '', '대표자명': '', '업태': '', '종목': '', '이메일': '', '면제대상': '', '검사이력': '' }
-            ];
-            if (!state.data[state.selectedYear]) state.data[state.selectedYear] = [];
-            state.data[state.selectedYear] = sampleData;
-            state.uploadedFileName = '샘플데이터.xlsx';
-            state.lastSaved = new Date();
-            state.showWelcome = false;
-            alert('샘플 데이터 2건이 생성되었습니다.');
-            saveDataToStorage();
-            updateFilters();
-            render();
-        }
-
-        function updateFilters() {
+              function updateFilters() {
             let result = [...(state.data[state.selectedYear] || [])];
             if (state.filters.region.length > 0) {
                 result = result.filter(row => {
@@ -1927,8 +1911,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <button id="sampleDataBtn" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-6 rounded-xl hover:from-blue-600 hover:to-blue-700 shadow-lg transform hover:scale-105 transition-all">
                                 <div class="text-4xl mb-3">🎯</div>
-                                <div class="text-lg font-bold mb-2">샘플 데이터</div>
-                                <div class="text-sm opacity-90">테스트용 2건 생성</div>
+                               
                             </button>
                             <label class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-6 rounded-xl hover:from-green-600 hover:to-green-700 shadow-lg transform hover:scale-105 transition-all cursor-pointer">
                                 <div class="text-4xl mb-3">📁</div>
@@ -1998,8 +1981,7 @@
                                     </div>
                                 ` : ''}
                             </div>
-                            <button id="sampleBtn" class="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">🎯 샘플 데이터</button>
-                            <button id="editToggleBtn" class="flex items-center gap-2 bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">✏️ ${state.isEditing ? '완료' : '편집'}</button>
+                            <button id="editToggleBtn" class="flex items-center gap-2 bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-70 0">✏️ ${state.isEditing ? '완료' : '편집'}</button>
                             <button id="saveBtn" class="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">💾 저장</button>
                             <button id="copyBtn" class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">📋 신청</button>
                             <button id="deleteBtn" class="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">🗑️ 삭제</button>
@@ -2975,6 +2957,7 @@ const certSaveExcelBtn = document.getElementById('certSaveExcelBtn');
     </script>
 </body>
 </html>
+
 
 
 
