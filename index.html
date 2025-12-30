@@ -1739,7 +1739,7 @@
                 const quarterMonths = { '1분기': [1, 2, 3], '2분기': [4, 5, 6], '3분기': [7, 8, 9], '4분기': [10, 11, 12] };
                 const months = quarterMonths[state.quarter.selectedQuarter] || [];
                 filteredData = filteredData.filter(row => {
-                    const baseDate = row['기준일'];
+                    const baseDate = row['검사일'];
                     if (!baseDate) return false;
                     const month = parseInt(baseDate.split('-')[1]);
                     return months.includes(month);
@@ -2957,6 +2957,7 @@ const certSaveExcelBtn = document.getElementById('certSaveExcelBtn');
     </script>
 </body>
 </html>
+
 
 
 
