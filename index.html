@@ -581,7 +581,8 @@
             render();
         }
 
-              function updateFilters() {
+       
+        function updateFilters() {
             let result = [...(state.data[state.selectedYear] || [])];
             if (state.filters.region.length > 0) {
                 result = result.filter(row => {
@@ -1911,7 +1912,6 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <button id="sampleDataBtn" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-6 rounded-xl hover:from-blue-600 hover:to-blue-700 shadow-lg transform hover:scale-105 transition-all">
                                 <div class="text-4xl mb-3">🎯</div>
-                               
                             </button>
                             <label class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-6 rounded-xl hover:from-green-600 hover:to-green-700 shadow-lg transform hover:scale-105 transition-all cursor-pointer">
                                 <div class="text-4xl mb-3">📁</div>
@@ -1981,7 +1981,7 @@
                                     </div>
                                 ` : ''}
                             </div>
-                            <button id="editToggleBtn" class="flex items-center gap-2 bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-70 0">✏️ ${state.isEditing ? '완료' : '편집'}</button>
+                             <button id="editToggleBtn" class="flex items-center gap-2 bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">✏️ ${state.isEditing ? '완료' : '편집'}</button>
                             <button id="saveBtn" class="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">💾 저장</button>
                             <button id="copyBtn" class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">📋 신청</button>
                             <button id="deleteBtn" class="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">🗑️ 삭제</button>
@@ -2276,55 +2276,130 @@ ${applicationColumns.map((col, colIdx) => `
                 </div>
             `;
         }
+        // ======================== 취소 탭 편집 기능 관련 ========================
 
-        function renderCancellationTab() {
-    const currentCancelData = state.cancellationData[state.targetYear] || [];
-    const cancelColsHtml = cancellationColumns.map(function(col) {
-        const width = col === '새주소' ? '200px' : col === '시설명' ? '150px' : '100px';
-        return '<th class="border px-2 py-2" style="width: ' + width + ';"><div class="truncate" title="' + col + '">' + col + '</div></th>';
-    }).join('');
-    const yearOptionsHtml = state.yearRange.map(function(year) {
-        const selected = year === state.targetYear ? 'selected' : '';
-        return '<option value="' + year + '" ' + selected + '>' + year + '년</option>';
-    }).join('');
-    let rowsHtml = '';
-    if (currentCancelData.length === 0) {
-        rowsHtml = '<tr><td colspan="' + (cancellationColumns.length + 2) + '" class="text-center py-8 text-gray-500"><div class="text-4xl mb-2">🚫</div><div>취소 데이터가 없습니다</div></td></tr>';
-    } else {
-        currentCancelData.forEach(function(row, idx) {
-            const cellsHtml = cancellationColumns.map(function(col) {
-                const val = row[col] || '-';
-                return '<td class="border px-2 py-1 text-sm"><div class="truncate" title="' + val + '">' + val + '</div></td>';
-            }).join('');
-            const isSelected = state.selectedCancellationRows.has(idx);
-            rowsHtml += '<tr class="' + (isSelected ? 'bg-yellow-100' : 'hover:bg-gray-50') + '"><td class="border px-2 py-1 text-center"><input type="checkbox" class="cancel-row-checkbox" data-idx="' + idx + '" ' + (isSelected ? 'checked' : '') + ' /></td><td class="border px-2 py-1 text-center">' + (idx + 1) + '</td>' + cellsHtml + '</tr>';
-        });
-    }
-    return '<div>' +
-        '<div class="bg-orange-50 border border-orange-300 rounded-lg p-4 mb-4">' +
-            '<h2 class="text-xl font-bold text-orange-800 flex items-center gap-2"><span>🚫</span> 취소대장: ' + state.targetYear + '년</h2>' +
-            '<p class="text-sm text-orange-600 mt-1">총 ' + currentCancelData.length + '건</p>' +
-        '</div>' +
-        '<div class="bg-white rounded-lg p-4 mb-4 shadow">' +
-            '<div class="flex gap-4 items-center mb-4">' +
-                '<div><label class="block text-sm font-semibold mb-1">해당년도</label><select id="cancelTargetYearSelect" class="px-3 py-2 border rounded">' + yearOptionsHtml + '</select></div>' +
-                '<button id="cancelDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">🗑️ 삭제</button>' +
-            '</div>' +
-        '</div>' +
-        '<div class="bg-white rounded-lg shadow overflow-hidden">' +
-            '<div class="overflow-x-auto" style="max-height: 600px;">' +
-                '<table class="w-full border-collapse text-sm" style="table-layout: fixed; min-width: 1400px;">' +
-                    '<thead class="bg-orange-600 text-white sticky top-0 z-10">' +
-                        '<tr><th class="border px-2 py-2" style="width: 50px;"><input type="checkbox" id="selectAllCancelRows" ' + (state.selectedCancellationRows.size === currentCancelData.length && currentCancelData.length > 0 ? 'checked' : '') + ' /></th><th class="border px-2 py-2" style="width: 50px;">No</th>' + cancelColsHtml + '</tr>' +
-                    '</thead>' +
-                    '<tbody>' + rowsHtml + '</tbody>' +
-                '</table>' +
-            '</div>' +
-            '<div class="flex items-center justify-between px-4 py-3 border-t bg-gray-50"><div class="text-sm text-gray-600">전체 ' + currentCancelData.length + '건' + (state.selectedCancellationRows.size > 0 ? ' (' + state.selectedCancellationRows.size + '건 선택됨)' : '') + '</div></div>' +
-        '</div>' +
-    '</div>';
+function renderCancellationTab() {
+    // 해당 연도의 취소 데이터 가져오기
+    const currentCancelData = state.cancellationData[state.selectedYear] || [];
+    
+    return `
+        <div class="bg-white rounded-lg shadow-lg p-4">
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-bold text-gray-800">🚫 취소 현황 (${state.selectedYear}년)</h2>
+                    <span class="text-sm text-gray-500 font-medium">총 ${currentCancelData.length}건</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="toggleCancellationEdit()" class="${state.isEditingCancellation ? 'bg-green-600' : 'bg-blue-600'} text-white px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-1">
+                        ${state.isEditingCancellation ? '💾 저장완료' : '✏️ 편집하기'}
+                    </button>
+                    <button onclick="deleteSelectedCancellation()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+                        선택 삭제
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto border rounded-lg scroll-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                        <tr>
+                            <th class="p-2 w-10 text-center">
+                                <input type="checkbox" onclick="toggleAllCancellationRows(this.checked)" class="w-4 h-4">
+                            </th>
+                            ${cancellationColumns.map(col => `
+                                <th class="p-2 border-r whitespace-nowrap" style="min-width: ${columnWidths[col] || '100px'}">
+                                    ${col}
+                                </th>
+                            `).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${currentCancelData.length === 0 ? 
+                            '<tr><td colspan="15" class="p-10 text-center text-gray-400">조회된 취소 내역이 없습니다.</td></tr>' :
+                            currentCancelData.map((row, idx) => `
+                            <tr class="border-b hover:bg-blue-50 transition">
+                                <td class="p-2 text-center">
+                                    <input type="checkbox" 
+                                        ${state.selectedCancellationRows.has(idx) ? 'checked' : ''} 
+                                        onclick="toggleCancellationRow(${idx})"
+                                        class="w-4 h-4">
+                                </td>
+                                ${cancellationColumns.map(col => `
+                                    <td class="p-1 border-r">
+                                        ${state.isEditingCancellation ? 
+                                            `<input type="text" 
+                                                value="${row[col] || ''}" 
+                                                onchange="updateCancellationValue(${idx}, '${col}', this.value)"
+                                                class="table-cell-input focus:ring-2 focus:ring-blue-400 outline-none">` : 
+                                            `<div class="px-2 py-1 truncate">${col === '수수료' ? formatCurrency(row[col]) : (row[col] || '')}</div>`
+                                        }
+                                    </td>
+                                `).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
 }
 
+// 1. 편집 모드 토글
+function toggleCancellationEdit() {
+    if (state.isEditingCancellation) {
+        // 편집 종료 시 저장 로직 실행
+        saveDataToStorage(); 
+        state.isEditingCancellation = false;
+        alert('변경사항이 성공적으로 저장되었습니다.');
+    } else {
+        state.isEditingCancellation = true;
+    }
+    render();
+}
+
+// 2. 입력값 실시간 반영
+function updateCancellationValue(idx, col, value) {
+    if (state.cancellationData[state.selectedYear]) {
+        state.cancellationData[state.selectedYear][idx][col] = value;
+    }
+}
+
+// 3. 체크박스 단일 선택
+function toggleCancellationRow(idx) {
+    if (state.selectedCancellationRows.has(idx)) {
+        state.selectedCancellationRows.delete(idx);
+    } else {
+        state.selectedCancellationRows.add(idx);
+    }
+    render();
+}
+
+// 4. 체크박스 전체 선택
+function toggleAllCancellationRows(checked) {
+    const currentData = state.cancellationData[state.selectedYear] || [];
+    if (checked) {
+        state.selectedCancellationRows = new Set(currentData.map((_, i) => i));
+    } else {
+        state.selectedCancellationRows.clear();
+    }
+    render();
+}
+
+// 5. 선택 항목 삭제
+function deleteSelectedCancellation() {
+    if (state.selectedCancellationRows.size === 0) {
+        alert('삭제할 항목을 선택해주세요.');
+        return;
+    }
+    if (confirm(`선택한 ${state.selectedCancellationRows.size}건을 삭제하시겠습니까?`)) {
+        const currentData = state.cancellationData[state.selectedYear] || [];
+        state.cancellationData[state.selectedYear] = currentData.filter((_, i) => !state.selectedCancellationRows.has(i));
+        state.selectedCancellationRows.clear();
+        saveDataToStorage();
+        render();
+    }
+}
+        
         function renderFooter() {
             return `
                 <div class="container mx-auto px-4 py-4 text-sm text-gray-600 flex items-center justify-between flex-wrap gap-4">
@@ -2957,10 +3032,6 @@ const certSaveExcelBtn = document.getElementById('certSaveExcelBtn');
     </script>
 </body>
 </html>
-
-
-
-
 
 
 
