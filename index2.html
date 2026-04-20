@@ -3023,14 +3023,8 @@ const certSaveExcelBtn = document.getElementById('certSaveExcelBtn');
             }
         });
 
-        // 자동저장
-        setInterval(() => {
-            if (state.settings.autoSave && (Object.keys(state.data).length > 0 || Object.keys(state.applicationData).length > 0)) {
-                saveDataToStorage();
-            }
-        }, state.settings.autoSaveInterval * 1000);
-    </script>
-</body>
+  
+                    </body>
 </html>
 
 
